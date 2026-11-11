@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Obra Dr. Clóvis — andamento da construção</title>
-  <!-- visual-v4-luz-materiais-camera -->
+  <!-- visual-v5-fluido -->
   <script type="importmap">
   { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
   </script>
@@ -90,11 +90,6 @@
   <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-    import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
-    import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
-    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     if (!CanvasRenderingContext2D.prototype.roundRect) {
       CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
         r = Math.min(r, w/2, h/2);
@@ -160,7 +155,7 @@
 
     const canvas = document.getElementById('c');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -176,8 +171,8 @@
       c.width = 8; c.height = 512;
       const g = c.getContext('2d');
       const grd = g.createLinearGradient(0, 0, 0, 512);
-      grd.addColorStop(0, '#6fa3cc');
-      grd.addColorStop(0.38, '#b7d2e6');
+      grd.addColorStop(0, '#5e98c8');
+      grd.addColorStop(0.38, '#9ec4e0');
       grd.addColorStop(0.55, '#e4e6dc');
       grd.addColorStop(1, '#c3d0b6');
       g.fillStyle = grd;
@@ -206,7 +201,7 @@
     const sun = new THREE.DirectionalLight(0xfff1d4, 2.15);
     sun.position.set(38, 46, 22);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.mapSize.set(1536, 1536);
     sun.shadow.camera.near = 2;
     sun.shadow.camera.far = 160;
     sun.shadow.camera.left = sun.shadow.camera.bottom = -55;
@@ -220,9 +215,6 @@
     const fill = new THREE.DirectionalLight(0xb7cbe0, 0.42);
     fill.position.set(-36, 22, -16);
     scene.add(fill);
-    const rim = new THREE.DirectionalLight(0xffe4c4, 0.32);
-    rim.position.set(-8, 12, 42);
-    scene.add(rim);
 
     (function dayEnv() {
       const s = new THREE.Scene();
@@ -242,19 +234,6 @@
       pmrem.dispose();
     })();
 
-    let composer, gtaoPass, smaaPass;
-    function setupComposer(w, h) {
-      composer = new EffectComposer(renderer);
-      composer.addPass(new RenderPass(scene, camera));
-      gtaoPass = new GTAOPass(scene, camera, w, h);
-      gtaoPass.output = GTAOPass.OUTPUT.Default;
-      gtaoPass.blendIntensity = 0.72;
-      composer.addPass(gtaoPass);
-      smaaPass = new SMAAPass(w, h);
-      composer.addPass(smaaPass);
-      composer.addPass(new OutputPass());
-      composer.setSize(w, h);
-    }
 
     const parts = [];
     function addPart(mesh, appear, opts = {}) {
@@ -350,10 +329,10 @@
       return new THREE.MeshStandardMaterial(params);
     }
     function glassMat(color = 0x8fb8d0, opacity = 0.48) {
-      return new THREE.MeshPhysicalMaterial({
-        color, roughness: 0.06, metalness: 0.08,
+      return new THREE.MeshStandardMaterial({
+        color, roughness: 0.08, metalness: 0.12,
         transparent: true, opacity, depthWrite: false,
-        envMapIntensity: 1.35, clearcoat: 0.6, clearcoatRoughness: 0.12
+        envMapIntensity: 1.2
       });
     }
     function box(w, h, d, color, x, y, z, mopts) {
@@ -954,13 +933,9 @@
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight, false);
-      if (composer) composer.setSize(innerWidth, innerHeight);
-      if (gtaoPass) gtaoPass.setSize(innerWidth, innerHeight);
-      if (smaaPass) smaaPass.setSize(innerWidth, innerHeight);
     }
     addEventListener('resize', resize);
     resize();
-    setupComposer(innerWidth, innerHeight);
     apply(displayT);
     markView();
     let lastTs = performance.now();
@@ -984,12 +959,11 @@
         camera.position.lerpVectors(camFly.p0, camFly.p1, e);
         controls.target.lerpVectors(camFly.t0, camFly.t1, e);
         if (camFly.k >= 1) {
-          controls.autoRotate = !!camFly.orbit;
           camFly = null;
         }
       }
       controls.update();
-      composer.render();
+      renderer.render(scene, camera);
     })();
   </script>
 </body>
