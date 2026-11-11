@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Obra Dr. Clóvis — andamento da construção</title>
-  <!-- visual-v6-ambientes-rampa -->
+  <!-- visual-v7-rampa-ss1 -->
   <script type="importmap">
   { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
   </script>
@@ -53,7 +53,7 @@
   <div class="top">
     <div class="card">
       <div class="title">Obra Dr. Clóvis — andamento da construção</div>
-      <div class="sub">Ambientes internos lidos nas plantas do térreo e do 2º pavimento (consultórios, recepção, exames e o restante). A rampa de acesso ao subsolo sobe para a rua, com a entrada visível. Vagas numeradas como no projeto. Use os botões para ver cada pavimento e a rampa.</div>
+      <div class="sub">Ambientes internos lidos nas plantas do térreo e do 2º pavimento. A rampa da rua entra no subsolo 1 (portão oeste); dali, outra rampa sobre as motos desce para o subsolo 2. Vagas numeradas como no projeto. Use os botões para ver cada pavimento e a rampa.</div>
       <div class="legend">
         <span><i class="sw" style="background:#3dba7a"></i>Já feito</span>
         <span><i class="sw" style="background:#7a8b9c;opacity:.45"></i>Ainda falta</span>
@@ -148,11 +148,11 @@
 
     const CUT = {
       obra: new Set(),
-      ss2: new Set(['ss2slab', 'ss1', 'ss1slab', 'terreo', 'terreoTeto', 'pav2', 'pav2Teto', 'caixa', 'fundacao']),
-      ss1: new Set(['ss1slab', 'terreo', 'terreoTeto', 'pav2', 'pav2Teto', 'caixa', 'fundacao']),
-      terreo: new Set(['pav2', 'pav2Teto', 'caixa', 'fundacao', 'terreoTeto']),
-      pav2: new Set(['caixa', 'pav2Teto', 'fundacao']),
-      rampa: new Set(['fundacao', 'caixa'])
+      ss2: new Set(['ss1', 'ss1slab', 'terreo', 'terreoTeto', 'pav2', 'pav2Teto', 'caixa', 'fundacao', 'ss2slab']),
+      ss1: new Set(['ss2', 'ss1slab', 'terreo', 'terreoTeto', 'pav2', 'pav2Teto', 'caixa', 'fundacao']),
+      terreo: new Set(['ss2', 'ss1', 'rampa', 'ss2slab', 'ss1slab', 'pav2', 'pav2Teto', 'caixa', 'fundacao', 'terreoTeto']),
+      pav2: new Set(['ss2', 'ss1', 'rampa', 'ss2slab', 'ss1slab', 'caixa', 'pav2Teto', 'fundacao']),
+      rampa: new Set(['pav2', 'pav2Teto', 'caixa', 'fundacao', 'terreoTeto'])
     };
     let viewMode = 'obra';
     let camFly = null;
@@ -461,16 +461,20 @@
     // --- Terreno, rua e jardim ---
     const pitCX = L/2, pitCZ = W/2;
     const pitW = L + 2.2, pitD = W + 2.2;
-    const rampZc = W - 2.35, rampWd = 4.8;
+    // Rampa interna: 13,65 m sobre as motos, liga SS2 (leste, baixo) ao SS1 (oeste, alto)
+    const rampLen = 13.65, rampX0 = 14.50, rampX1 = rampX0 + rampLen;
+    const rampWd = 6.8, rampZc = W - rampWd/2;
+    // Acesso da rua: portão no corredor do SS1, face oeste
+    const gateZ = 8.7, gateWd = 5.0;
     const groundMat = mat(0xffffff, 0.95, { map: grassMap, env: 0.35, bumpMap: grassMap, bumpScale: 0.08 });
     const gShape = new THREE.Shape();
     const ow = 85, od = 85;
     gShape.moveTo(-ow,-od); gShape.lineTo(ow,-od); gShape.lineTo(ow,od); gShape.lineTo(-ow,od); gShape.closePath();
     const hole = new THREE.Path();
-    // L: cova da obra + canal da rampa até a rua (oeste)
+    // L: cova da obra + canal do acesso oeste até a rua
     const hx0 = -pitW/2, hx1 = pitW/2, hz0 = -pitD/2, hz1 = pitD/2;
     const chx0 = -pitCX - 12, chx1 = -pitCX + 2.5;
-    const chz0 = rampZc - rampWd/2 - pitCZ, chz1 = rampZc + rampWd/2 - pitCZ;
+    const chz0 = gateZ - gateWd/2 - pitCZ, chz1 = gateZ + gateWd/2 - pitCZ;
     hole.moveTo(hx0, hz0);
     hole.lineTo(hx0, chz0);
     hole.lineTo(chx0, chz0);
@@ -496,12 +500,13 @@
     ruaLbl.position.set(-14.2, 1.2, pitCZ);
     scene.add(ruaLbl);
 
-    addPart(box(10.2, 0.22, 11.5, 0x5a6a4e, -5.1, 0.12, 5.4), 0, { preview: 'hide', layer: 'site' });
+    addPart(box(10.2, 0.22, 5.4, 0x5a6a4e, -5.1, 0.12, 3.2), 0, { preview: 'hide', layer: 'site' });
+    addPart(box(10.2, 0.22, 4.6, 0x5a6a4e, -5.1, 0.12, 13.6), 0, { preview: 'hide', layer: 'site' });
     addPart(box(4.2, 0.22, 22, 0x5a6a4e, L + 2.0, 0.12, pitCZ), 0, { preview: 'hide', layer: 'site' });
     addPart(box(L+2, 0.22, 2.0, 0x5a6a4e, pitCX, 0.12, -1.15), 0, { preview: 'hide', layer: 'site' });
     addPart(box(L+2, 0.22, 2.0, 0x5a6a4e, pitCX, 0.12, W+1.15), 0, { preview: 'hide', layer: 'site' });
 
-    addPart(box(7.2, 0.35, 7.2, 0x4e6a45, -5.4, 0.28, 4.2), 0, { preview: 'hide', layer: 'site' });
+    addPart(box(6.0, 0.35, 4.4, 0x4e6a45, -5.6, 0.28, 3.0), 0, { preview: 'hide', layer: 'site' });
     function tree(x, z, h, r) {
       addPart(cyl(0.18 + r*0.08, h, 0x5a4030, x, h/2, z, 8), 0, { preview: 'hide', layer: 'site' });
       const foliage = new THREE.Mesh(
@@ -512,9 +517,9 @@
       foliage.scale.set(1, 0.85, 1);
       addPart(foliage, 0, { preview: 'hide', layer: 'site' });
     }
-    tree(-6.6, 3.4, 2.6, 1.35);
-    tree(-7.4, 6.8, 2.0, 0.95);
-    tree(-3.2, 5.1, 2.3, 1.05);
+    tree(-6.8, 2.2, 2.6, 1.35);
+    tree(-7.6, 4.2, 2.0, 0.95);
+    tree(-6.4, 14.6, 2.3, 1.05);
 
     addPart(box(pitW-0.2, 3.9, pitD-0.2, 0x5a6a4e, pitCX, -1.9, pitCZ), 0, { until: A.escava1, preview: 'hide', layer: 'site' });
     addPart(box(pitW-0.2, 0.2, pitD-0.2, 0x2b241c, pitCX, Y.ss2 - 0.35, pitCZ), A.escava1, { preview: 'hide', layer: 'site' });
@@ -527,8 +532,8 @@
       const x0 = -0.9, x1 = L+0.9, z0 = -0.9, z1 = W+0.9;
       addPart(box(x1-x0, h, 0.55, wallC, (x0+x1)/2, y, z0), appear, { explode: ex, layer: 'site' });
       addPart(box(x1-x0, h, 0.55, wallC, (x0+x1)/2, y, z1), appear, { explode: ex, layer: 'site' });
-      // parede oeste com vão da rampa (acesso pela rua)
-      const gap0 = rampZc - rampWd/2 - 0.15, gap1 = rampZc + rampWd/2 + 0.15;
+      // parede oeste com vão do portão (acesso da rua no corredor do SS1)
+      const gap0 = gateZ - gateWd/2 - 0.1, gap1 = gateZ + gateWd/2 + 0.1;
       addPart(box(0.55, h, Math.max(0.4, gap0 - z0), wallC, x0, y, (z0+gap0)/2), appear, { explode: ex, layer: 'site' });
       addPart(box(0.55, h, Math.max(0.4, z1 - gap1), wallC, x0, y, (gap1+z1)/2), appear, { explode: ex, layer: 'site' });
       addPart(box(0.55, h, z1-z0-0.55, wallC, x1, y, (z0+z1)/2), appear, { explode: ex, layer: 'site' });
@@ -663,15 +668,23 @@
       }
     }
     function wallGapWest(h, color, x, y, appear, lift, layer) {
-      const gap0 = rampZc - rampWd/2, gap1 = rampZc + rampWd/2;
+      const gap0 = gateZ - gateWd/2, gap1 = gateZ + gateWd/2;
       wall(0.28, h, Math.max(0.4, gap0), color, x, y, gap0/2, appear, lift, layer);
       wall(0.28, h, Math.max(0.4, W - gap1), color, x, y, (gap1+W)/2, appear, lift, layer);
     }
+    // Laje do SS1: furo só no retângulo da rampa interna (sobre as motos)
     function slabOpenRamp(l, thick, color, y, appear, lift, layer) {
-      const zCut = rampZc - rampWd/2 - 0.15;
+      const zCut = rampZc - rampWd/2 - 0.12;
       slab(l, Math.max(1, zCut), thick, color, l/2, y, zCut/2, appear, lift, layer);
-      const xEast = 27.2;
-      slab(Math.max(1, l - xEast), rampWd + 0.6, thick, color, (xEast+l)/2, y, rampZc, appear, lift, layer);
+      if (rampX0 > 0.6) slab(rampX0, rampWd + 0.4, thick, color, rampX0/2, y, rampZc, appear, lift, layer);
+      if (l - rampX1 > 0.6) slab(l - rampX1, rampWd + 0.4, thick, color, (rampX1+l)/2, y, rampZc, appear, lift, layer);
+    }
+    // Laje do térreo: furo só no portão oeste (acesso da rua ao SS1)
+    function slabOpenGate(l, thick, color, y, appear, lift, layer) {
+      const z0 = gateZ - gateWd/2 - 0.15, z1 = gateZ + gateWd/2 + 0.15;
+      slab(l, Math.max(1, z0), thick, color, l/2, y, z0/2, appear, lift, layer);
+      slab(l, Math.max(1, W - z1), thick, color, l/2, y, (z1+W)/2, appear, lift, layer);
+      slab(Math.max(1, l - 3.2), gateWd + 0.4, thick, color, (3.2+l)/2, y, gateZ, appear, lift, layer);
     }
 
     // Núcleo: paredes + escada + poço do elevador (vidro na face sul, porta a norte)
@@ -734,10 +747,9 @@
     slab(L, W, 0.35, 0x3f4348, pitCX, ySS2, pitCZ, A.ss2, 26, 'ss2');
     slabOpenRamp(L, 0.3, 0x8a8580, Y.ss1 - 0.05, A.ss2, 26, 'ss2slab');
     wall(L, hSS, 0.28, 0x9a958c, pitCX, ySS2 + hSS/2, 0.14, A.ss2, 26, 'ss2');
-    wallGapWest(hSS, 0x9a958c, 0.14, ySS2 + hSS/2, A.ss2, 26, 'ss2');
+    wall(0.28, hSS, W, 0x9a958c, 0.14, ySS2 + hSS/2, pitCZ, A.ss2, 26, 'ss2');
     wall(0.28, hSS, W, 0x9a958c, L-0.14, ySS2 + hSS/2, pitCZ, A.ss2, 26, 'ss2');
-    wall(12.2, hSS, 0.28, 0x9a958c, 6.1, ySS2 + hSS/2, W-0.14, A.ss2, 26, 'ss2');
-    wall(8.0, hSS, 0.28, 0x9a958c, L-4.0, ySS2 + hSS/2, W-0.14, A.ss2, 26, 'ss2');
+    wall(L, hSS, 0.28, 0x9a958c, pitCX, ySS2 + hSS/2, W-0.14, A.ss2, 26, 'ss2');
 
     const sulZ = 2.70, stallLen = 5.0;
     // fileira sul SS2: 11 a 5, núcleo, IDOSO, 4 a 1
@@ -756,11 +768,11 @@
     aisle(0.50 + 2.50 + 0.60, nZ, 1.20, stallLen, A.ss2, 26, 'ss2', ySS2);
     stall(0.50 + 2.50 + 1.20 + SW/2, nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 13, 'NORMAL');
     stall(0.50 + 2.50 + 1.20 + SW + SW/2, nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 14, 'NORMAL');
-    const motoX0 = 11.8;
+    const motoStep = rampLen / 12;
     for (let i = 0; i < 12; i++) {
-      stall(motoX0 + i*1.12 + 0.56, W - 1.85, 1.10, 2.30, A.ss2, 26, 'ss2', ySS2, i + 1, 'MOTO');
+      stall(rampX0 + i*motoStep + motoStep/2, rampZc - rampWd/2 + 1.15, 1.08, 2.20, A.ss2, 26, 'ss2', ySS2, i + 1, 'MOTO');
     }
-    stall(L - 0.40 - SW - SW/2, nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 15, 'NORMAL');
+    stall(Math.min(L - 0.40 - SW - SW/2, rampX1 + 0.4 + SW/2), nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 15, 'NORMAL');
     stall(L - 0.40 - SW/2, nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 16, 'NORMAL');
 
     const cols = [2.0, 7.4, 12.8, 23.6, 29.2];
@@ -771,38 +783,52 @@
     buildCore(ySS2, hSS, A.ss2, 26, 'ss2', 0x8d887e, true);
     coreLabels(ySS2, A.ss2, 26, 'ss2', 'SUBSOLO 2');
 
-    // Rampa: trecho coberto (motos, 13,65 m) + trecho de acesso até a rua (sobe a oeste)
-    const yRampLow = Y.ss2 + 0.38, yRampMid = -1.15, yRampTop = 0.12;
-    const xRampLow = 26.4, xRampMid = 12.7, xRampTop = -2.4;
-    rampRun(xRampLow, yRampLow, xRampMid, yRampMid, rampZc, rampWd - 0.3, A.ss2, 18, 'ss2');
-    rampRun(xRampMid, yRampMid, xRampTop, yRampTop, rampZc, rampWd - 0.3, A.ss2, 18, 'ss2');
-    addPart(box(3.2, 0.22, rampWd - 0.2, mat(0xffffff, 0.9, { map: asphaltMap, env: 0.3 }), xRampTop - 1.4, yRampTop, rampZc), A.ss2, { explode: new THREE.Vector3(-8, 18, 4), layer: 'ss2' });
-    const acesso = labelSprite('ACESSO VEÍCULOS', '#e8edf2', 3.6, 0.5);
-    acesso.position.set(-1.2, 1.55, rampZc);
-    addPart(acesso, A.ss2, { explode: new THREE.Vector3(-8, 18, 4), layer: 'ss2' });
-    const sobe = labelSprite('RAMPA  ·  SOBE', '#e8edf2', 3.2, 0.5);
-    sobe.position.set(8.5, 1.35, rampZc + 0.2);
-    addPart(sobe, A.ss2, { explode: new THREE.Vector3(-8, 18, 4), layer: 'ss2' });
+    // Rampa interna: só sobre as motos, do SS2 (leste, baixo) ao SS1 (oeste, alto)
+    const yRampSS2 = Y.ss2 + 0.38, yRampSS1 = Y.ss1 + 0.38;
+    rampRun(rampX1, yRampSS2, rampX0, yRampSS1, rampZc, rampWd - 0.45, A.ss2, 18, 'rampa');
+    const desce2 = labelSprite('DESCE  →  SUBSOLO 2', '#e8edf2', 3.6, 0.5);
+    desce2.position.set(rampX1 - 2.2, yRampSS2 + 1.35, rampZc);
+    addPart(desce2, A.ss2, { explode: new THREE.Vector3(-8, 18, 4), layer: 'rampa' });
+    const sobe1 = labelSprite('SOBE  →  SUBSOLO 1', '#e8edf2', 3.4, 0.5);
+    sobe1.position.set(rampX0 + 2.4, yRampSS1 + 1.35, rampZc);
+    addPart(sobe1, A.ss2, { explode: new THREE.Vector3(-8, 18, 4), layer: 'rampa' });
 
     // --- Subsolo 1 ---
     const ySS1 = Y.ss1 + 0.15;
     const hSS1 = 2.45;
-    slabOpenRamp(L, 0.3, 0x8a8580, Y.terreo - 0.08, A.ss1, 32, 'ss1slab');
+    slabOpenGate(L, 0.3, 0x8a8580, Y.terreo - 0.08, A.ss1, 32, 'ss1slab');
     const zSS1 = rampZc - rampWd/2 - 0.2;
     addPart(box(L-0.6, 0.04, Math.max(1, zSS1-0.3), 0x4a4f55, pitCX, ySS1 + 0.02, (zSS1-0.3)/2), A.ss1, { explode: new THREE.Vector3(0, 32, 0), layer: 'ss1' });
     wall(L, hSS1, 0.28, 0xa39e94, pitCX, ySS1 + hSS1/2, 0.14, A.ss1, 32, 'ss1');
     wallGapWest(hSS1, 0xa39e94, 0.14, ySS1 + hSS1/2, A.ss1, 32, 'ss1');
     wall(0.28, hSS1, W, 0xa39e94, L-0.14, ySS1 + hSS1/2, pitCZ, A.ss1, 32, 'ss1');
-    wall(12.2, hSS1, 0.28, 0xa39e94, 6.1, ySS1 + hSS1/2, W-0.14, A.ss1, 32, 'ss1');
-    wall(8.0, hSS1, 0.28, 0xa39e94, L-4.0, ySS1 + hSS1/2, W-0.14, A.ss1, 32, 'ss1');
+    wall(L, hSS1, 0.28, 0xa39e94, pitCX, ySS1 + hSS1/2, W-0.14, A.ss1, 32, 'ss1');
 
-    // norte SS1: 17, 18, 19 + motos
+    // norte SS1: 17, 18, 19 (as motos ficam só no SS2, sob a rampa)
     stall(0.50 + SW/2, nZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 17, 'NORMAL');
     stall(0.50 + SW + SW/2, nZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 18, 'NORMAL');
     stall(0.50 + 2*SW + SW/2, nZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 19, 'NORMAL');
-    for (let i = 0; i < 12; i++) {
-      stall(motoX0 + i*1.12 + 0.56, W - 1.85, 1.10, 2.30, A.ss1, 32, 'ss1', ySS1, i + 1, 'MOTO');
-    }
+
+    // Patamar e entrada da rampa no SS1 + mureta (abre no corredor, a oeste)
+    addPart(box(2.6, 0.16, rampWd - 0.6, 0x6a6e74, rampX0 - 0.9, yRampSS1, rampZc), A.ss1, { explode: new THREE.Vector3(0, 32, 0), layer: 'ss1' });
+    const murZ = rampZc - rampWd/2 + 0.06, murH = 1.30;
+    wall(rampLen - 3.4, murH, 0.16, 0x9a958c, rampX0 + 3.4 + (rampLen-3.4)/2, ySS1 + murH/2, murZ, A.ss1, 32, 'ss1');
+    wall(0.16, murH, rampWd - 1.2, 0x9a958c, rampX0, ySS1 + murH/2, rampZc + 0.4, A.ss1, 32, 'ss1');
+    const ent1 = labelSprite('ENTRADA  ·  SUBSOLO 1', '#e8edf2', 3.8, 0.52);
+    ent1.position.set(rampX0 - 0.2, ySS1 + 2.15, murZ - 1.1);
+    addPart(ent1, A.ss1, { explode: new THREE.Vector3(0, 32, 0), layer: 'ss1' });
+
+    // Acesso da rua até o portão oeste do SS1
+    const yStreet = 0.10, yGate = yRampSS1;
+    rampRun(-7.2, yStreet, 0.45, yGate, gateZ, gateWd - 0.3, A.ss1, 22, 'ss1');
+    addPart(box(3.0, 0.18, gateWd, mat(0xffffff, 0.9, { map: asphaltMap, env: 0.3 }), -8.4, yStreet, gateZ), A.ss1, { explode: new THREE.Vector3(-8, 22, 0), layer: 'ss1' });
+    // marco do portão de rolo
+    addPart(box(0.16, 2.44, 0.16, mat(0x3a4550, 0.4, { metal: 0.55 }), 0.22, yGate + 1.22, gateZ - gateWd/2), A.ss1, { explode: new THREE.Vector3(-6, 22, 0), layer: 'ss1' });
+    addPart(box(0.16, 2.44, 0.16, mat(0x3a4550, 0.4, { metal: 0.55 }), 0.22, yGate + 1.22, gateZ + gateWd/2), A.ss1, { explode: new THREE.Vector3(-6, 22, 0), layer: 'ss1' });
+    addPart(box(0.16, 0.14, gateWd, mat(0x3a4550, 0.4, { metal: 0.55 }), 0.22, yGate + 2.44, gateZ), A.ss1, { explode: new THREE.Vector3(-6, 22, 0), layer: 'ss1' });
+    const acesso = labelSprite('ACESSO VEÍCULOS', '#e8edf2', 3.6, 0.5);
+    acesso.position.set(-4.6, 1.85, gateZ);
+    addPart(acesso, A.ss1, { explode: new THREE.Vector3(-8, 22, 0), layer: 'ss1' });
     // sul SS1: 20, 21, 22 PCD, núcleo, IDOSO, 23, 24, 25 PCD
     stall(0.40 + SW/2, sulZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 20, 'NORMAL');
     stall(0.40 + SW + SW/2, sulZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 21, 'NORMAL');
@@ -826,13 +852,13 @@
     const yT = Y.terreo + 0.15;
     const hT = 3.35;
     const clinX0 = 12.2, clinL = L - clinX0, clinZ0 = 0.2, clinW = W - 0.4;
-    const zPark = rampZc - rampWd/2 - 0.25;
-    slab(clinX0 - 0.2, zPark, 0.32, 0x7a7e84, clinX0/2, yT, zPark/2, A.terreo, 38, 'terreo');
-    // vagas descobertas 26, 27 (sul) e 28, 29 (ao lado da clínica, sul da rampa)
-    stall(3.15, 7.4, 2.50, 5.00, A.terreo, 38, 'terreo', yT, 27, 'NORMAL');
-    stall(5.75, 7.4, 2.50, 5.00, A.terreo, 38, 'terreo', yT, 26, 'NORMAL');
-    stall(8.6, Math.min(12.0, zPark - 2.6), 5.00, 2.50, A.terreo, 38, 'terreo', yT, 29, 'NORMAL');
-    stall(8.6, Math.min(14.2, zPark - 1.15), 5.00, 2.50, A.terreo, 38, 'terreo', yT, 28, 'NORMAL');
+    const zPark = gateZ - gateWd/2 - 0.3;
+    slab(clinX0 - 0.2, Math.max(4, zPark), 0.32, 0x7a7e84, clinX0/2, yT, Math.max(4, zPark)/2, A.terreo, 38, 'terreo');
+    // vagas descobertas 26–29 ao sul do acesso oeste (o corredor da rampa fica livre)
+    stall(3.15, 4.8, 2.50, 5.00, A.terreo, 38, 'terreo', yT, 27, 'NORMAL');
+    stall(5.75, 4.8, 2.50, 5.00, A.terreo, 38, 'terreo', yT, 26, 'NORMAL');
+    stall(8.8, 4.6, 5.00, 2.50, A.terreo, 38, 'terreo', yT, 29, 'NORMAL');
+    stall(8.8, 7.2, 5.00, 2.50, A.terreo, 38, 'terreo', yT, 28, 'NORMAL');
     const estD = labelSprite('VAGAS 26 A 29', '#e8edf2', 2.6, 0.48);
     estD.position.set(3.4, yT + 2.0, 10.8);
     addPart(estD, A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo', onlyView: 'terreo' });
@@ -1077,7 +1103,7 @@
       ss1:    { pos: new THREE.Vector3(2, 16, 28),   tgt: new THREE.Vector3(16, Y.ss1 + 0.3, 10), t: 1, orbit: false },
       terreo: { pos: new THREE.Vector3(22.4, 38, 16.5), tgt: new THREE.Vector3(22.4, 2.2, 10.2), t: 1, orbit: false },
       pav2:   { pos: new THREE.Vector3(17.7, 28, 6.0), tgt: new THREE.Vector3(17.7, Y.pav2 + 0.3, 5.3), t: 1, orbit: false },
-      rampa:  { pos: new THREE.Vector3(-14, 9, 5),    tgt: new THREE.Vector3(6, -0.5, 14.6), t: 1, orbit: false }
+      rampa:  { pos: new THREE.Vector3(-18, 7.5, 8.7), tgt: new THREE.Vector3(2.0, -0.5, 8.7), t: 1, orbit: false }
     };
     let targetT = dateToT(HOJE);
     let displayT = targetT;
