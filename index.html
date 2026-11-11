@@ -9,30 +9,16 @@
   </script>
   <style>
     :root {
-      --bg: #0f1419;
-      --panel: #161d25f2;
-      --line: #2a3542;
-      --text: #e8eef4;
-      --muted: #9aa8b6;
-      --done: #3dba7a;
-      --todo: #7a8b9c;
-      --today: #f0b429;
-      --accent: #4ea3d9;
+      --bg: #0f1419; --panel: #161d25f2; --line: #2a3542; --text: #e8eef4;
+      --muted: #9aa8b6; --done: #3dba7a; --todo: #7a8b9c; --today: #f0b429; --accent: #4ea3d9;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: "Segoe UI", system-ui, sans-serif; }
     #c { display: block; width: 100%; height: 100%; }
-    .top {
-      position: absolute; top: 16px; left: 16px; right: 16px;
-      display: flex; justify-content: space-between; gap: 16px; pointer-events: none;
-    }
-    .card {
-      pointer-events: auto; background: var(--panel); border: 1px solid var(--line);
-      border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(8px);
-      box-shadow: 0 8px 28px #0006;
-    }
+    .top { position: absolute; top: 16px; left: 16px; right: 16px; display: flex; justify-content: space-between; gap: 16px; pointer-events: none; }
+    .card { pointer-events: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(8px); box-shadow: 0 8px 28px #0006; }
     .title { font-size: 15px; font-weight: 700; letter-spacing: .02em; }
-    .sub { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 440px; line-height: 1.4; }
+    .sub { font-size: 12px; color: var(--muted); margin-top: 4px; max-width: 460px; line-height: 1.4; }
     .legend { display: flex; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
     .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; margin-right: 6px; vertical-align: -1px; }
     .info { min-width: 240px; max-width: 300px; }
@@ -42,11 +28,7 @@
     .lista { margin: 10px 0 0; padding: 0; list-style: none; font-size: 12px; line-height: 1.55; }
     .lista .ok { color: var(--done); }
     .lista .no { color: var(--todo); }
-    .bottom {
-      position: absolute; left: 16px; right: 16px; bottom: 16px;
-      background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
-      padding: 14px 18px 16px; box-shadow: 0 8px 28px #0006;
-    }
+    .bottom { position: absolute; left: 16px; right: 16px; bottom: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px 16px; box-shadow: 0 8px 28px #0006; }
     .bar-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; gap: 12px; }
     .bar-head strong { font-size: 13px; }
     .bar-head span { font-size: 12px; color: var(--muted); }
@@ -57,17 +39,11 @@
     .tick.now .dot { background: var(--today); }
     .tick.now { color: var(--today); font-weight: 700; }
     .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
-    button {
-      background: #22303c; color: var(--text); border: 1px solid var(--line);
-      border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer;
-    }
+    button { background: #22303c; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
     button:hover { border-color: var(--accent); }
     button.hoje { background: #3a2e12; border-color: #8a6a1f; color: var(--today); }
     .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.4; }
-    @media (max-width: 700px) {
-      .top { flex-direction: column; }
-      .info { max-width: none; }
-    }
+    @media (max-width: 700px) { .top { flex-direction: column; } .info { max-width: none; } }
   </style>
 </head>
 <body>
@@ -75,13 +51,13 @@
   <div class="top">
     <div class="card">
       <div class="title">Obra Dr. Clóvis — andamento da construção</div>
-      <div class="sub">Protótipo para o cliente acompanhar o que já foi feito e o que ainda falta. Arraste a barra e a obra se monta ou se desmonta em camadas, como naqueles modelos de carro. Volumes simplificados a partir das plantas do Drive.</div>
+      <div class="sub">Protótipo com o volume da planta (implantação, subsolos, térreo, 2º pavimento e cortes). Arraste a barra para montar e desmontar a obra. As medidas foram lidas nas pranchas do Drive e arredondadas para este modelo.</div>
       <div class="legend">
-        <span><i class="sw" style="background:#3dba7a"></i>Já feito (encaixado)</span>
-        <span><i class="sw" style="background:#7a8b9c;opacity:.45"></i>Ainda falta (separado)</span>
-        <span><i class="sw" style="background:#8d8a84"></i>Contenção</span>
-        <span><i class="sw" style="background:#6b6258"></i>Fundação</span>
-        <span><i class="sw" style="background:#c4b49a"></i>Pavimentos</span>
+        <span><i class="sw" style="background:#3dba7a"></i>Já feito</span>
+        <span><i class="sw" style="background:#7a8b9c;opacity:.45"></i>Ainda falta</span>
+        <span><i class="sw" style="background:#4a4f56"></i>Vagas / rampa</span>
+        <span><i class="sw" style="background:#d6d0c4"></i>Clínica</span>
+        <span><i class="sw" style="background:#c4a882"></i>Caixa d’água</span>
       </div>
     </div>
     <div class="card info">
@@ -103,7 +79,7 @@
       <button type="button" class="hoje" id="btnHoje">Hoje (posição prevista)</button>
       <button type="button" id="btnFim">Obra montada</button>
     </div>
-    <div class="hint">Arraste a barra para montar ou desmontar. Gire o modelo com o mouse (ou o dedo) e use a roda para aproximar. As datas seguem o cronograma previsto; o andamento real ainda pode ser ajustado com o que o Bravo registrar de material e com o que o General marcar como executado. Os volumes são aproximados, não um modelo de engenharia.</div>
+    <div class="hint">Arraste a barra para montar ou desmontar. Gire o modelo com o mouse e use a roda para aproximar. Datas do cronograma previsto; o andamento real ainda pode ser ligado ao material do Bravo e ao que o General marcar como executado. Volumes aproximados a partir das plantas, não um modelo de engenharia.</div>
   </div>
   <script type="module">
     import * as THREE from 'three';
@@ -112,24 +88,11 @@
     const INICIO = new Date(2026, 8, 8);
     const FIM = new Date(2027, 11, 31);
     const HOJE = new Date(2026, 10, 11);
-
-    function parseISO(s) {
-      const [y, m, d] = s.split('-').map(Number);
-      return new Date(y, m - 1, d);
-    }
-    function dateToT(date) {
-      return Math.min(1, Math.max(0, (date.getTime() - INICIO.getTime()) / (FIM.getTime() - INICIO.getTime())));
-    }
-    function tToDate(t) {
-      return new Date(INICIO.getTime() + t * (FIM.getTime() - INICIO.getTime()));
-    }
-    function fmt(s) {
-      const [y, m, d] = s.split('-');
-      return `${d}/${m}/${y}`;
-    }
-    function fmtDate(d) {
-      return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    }
+    function parseISO(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+    function dateToT(date) { return Math.min(1, Math.max(0, (date.getTime()-INICIO.getTime())/(FIM.getTime()-INICIO.getTime()))); }
+    function tToDate(t) { return new Date(INICIO.getTime() + t*(FIM.getTime()-INICIO.getTime())); }
+    function fmt(s) { const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
+    function fmtDate(d) { return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric'}); }
     const T = (s) => dateToT(parseISO(s));
 
     const ETAPAS = [
@@ -150,24 +113,19 @@
       { nome: 'Blocos e baldrame', ini: '2027-01-13', fim: '2027-01-20' },
       { nome: 'Estrutura (subsolos, térreo e 2º pavimento)', ini: '2027-02-01', fim: '2027-12-31' }
     ];
-
     const A = {
-      rachao: T('2026-09-16'),
-      faseA: T('2026-10-01'),
-      escava1: T('2026-10-19'),
-      faseB1: T('2026-10-14'),
-      escava2: T('2026-11-03'),
-      faseB2: T('2026-11-10'),
-      escava3: T('2026-11-30'),
-      faseC: T('2026-12-07'),
-      escavaF: T('2026-12-21'),
-      fund: T('2027-01-05'),
-      blocos: T('2027-01-13'),
-      ss2: T('2027-02-01'),
-      ss1: T('2027-05-01'),
-      terreo: T('2027-08-01'),
-      pav2: T('2027-11-01')
+      rachao: T('2026-09-16'), faseA: T('2026-10-01'), escava1: T('2026-10-19'),
+      faseB1: T('2026-10-14'), escava2: T('2026-11-03'), faseB2: T('2026-11-10'),
+      escava3: T('2026-11-30'), faseC: T('2026-12-07'), escavaF: T('2026-12-21'),
+      fund: T('2027-01-05'), blocos: T('2027-01-13'),
+      ss2: T('2027-02-01'), ss1: T('2027-05-01'), terreo: T('2027-08-01'),
+      pav2: T('2027-11-01'), caixa: T('2027-12-01')
     };
+
+    // Cotas lidas nas plantas (cm viraram metros). Eixos: X da rua para o fundo, Z na largura do lote.
+    const Y = { ss2: -3.72, ss1: -1.12, terreo: 1.48, pav2: 5.16, caixa: 8.31, topo: 11.16 };
+    const L = 32.75, W = 17.28; // subsolo / estacionamento coberto
+    const CORE = { x: 18.4, z: 0.35, l: 5.4, w: 5.8 };
 
     const canvas = document.getElementById('c');
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -178,34 +136,31 @@
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a222b);
-    scene.fog = new THREE.Fog(0x1a222b, 90, 180);
+    scene.fog = new THREE.Fog(0x1a222b, 90, 190);
 
     const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 400);
-    camera.position.set(52, 28, 44);
-
+    camera.position.set(-22, 22, 36);
     const controls = new OrbitControls(camera, canvas);
-    controls.target.set(4, 2, 0);
+    controls.target.set(14, 2, 8);
     controls.enableDamping = true;
-    controls.maxPolarAngle = Math.PI * 0.48;
-    controls.minDistance = 18;
-    controls.maxDistance = 120;
+    controls.maxPolarAngle = Math.PI * 0.49;
+    controls.minDistance = 16;
+    controls.maxDistance = 130;
 
     scene.add(new THREE.HemisphereLight(0xc9d6e2, 0x3a3228, 0.9));
     const sun = new THREE.DirectionalLight(0xfff3d6, 1.2);
-    sun.position.set(30, 45, 18);
+    sun.position.set(20, 50, 28);
     sun.castShadow = true;
     sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.camera.left = sun.shadow.camera.bottom = -55;
-    sun.shadow.camera.right = sun.shadow.camera.top = 55;
+    sun.shadow.camera.left = sun.shadow.camera.bottom = -60;
+    sun.shadow.camera.right = sun.shadow.camera.top = 60;
     scene.add(sun);
     scene.add(new THREE.AmbientLight(0x6d7c8a, 0.35));
 
     const parts = [];
     function addPart(mesh, appear, opts = {}) {
       mesh.userData = {
-        appear,
-        until: opts.until,
-        preview: opts.preview || 'ghost',
+        appear, until: opts.until, preview: opts.preview || 'ghost',
         rest: mesh.position.clone(),
         explode: opts.explode || new THREE.Vector3(0, 0, 0)
       };
@@ -215,144 +170,286 @@
       parts.push(mesh);
       return mesh;
     }
+    function mat(color, rough = 0.86) {
+      return new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0.04 });
+    }
     function box(w, h, d, color, x, y, z) {
-      const mesh = new THREE.Mesh(
-        new THREE.BoxGeometry(w, h, d),
-        new THREE.MeshStandardMaterial({ color, roughness: 0.86, metalness: 0.04 })
-      );
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(color));
       mesh.position.set(x, y, z);
       return mesh;
     }
-    function cyl(r, h, color, x, y, z) {
-      const mesh = new THREE.Mesh(
-        new THREE.CylinderGeometry(r, r, h, 10),
-        new THREE.MeshStandardMaterial({ color, roughness: 0.8, metalness: 0.08 })
-      );
+    function cyl(r, h, color, x, y, z, seg = 12) {
+      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat(color, 0.8));
       mesh.position.set(x, y, z);
       return mesh;
     }
-    function ringPlate(outerW, outerD, innerW, innerD, thickness, color) {
+    function ringPlate(outerW, outerD, innerW, innerD, thick, color) {
       const shape = new THREE.Shape();
-      const ow = outerW / 2, od = outerD / 2;
-      shape.moveTo(-ow, -od); shape.lineTo(ow, -od); shape.lineTo(ow, od); shape.lineTo(-ow, od); shape.closePath();
+      const ow = outerW/2, od = outerD/2;
+      shape.moveTo(-ow,-od); shape.lineTo(ow,-od); shape.lineTo(ow,od); shape.lineTo(-ow,od); shape.closePath();
       const hole = new THREE.Path();
-      const iw = innerW / 2, id = innerD / 2;
-      hole.moveTo(-iw, -id); hole.lineTo(-iw, id); hole.lineTo(iw, id); hole.lineTo(iw, -id); hole.closePath();
+      const iw = innerW/2, id = innerD/2;
+      hole.moveTo(-iw,-id); hole.lineTo(-iw,id); hole.lineTo(iw,id); hole.lineTo(iw,-id); hole.closePath();
       shape.holes.push(hole);
-      const geo = new THREE.ExtrudeGeometry(shape, { depth: thickness, bevelEnabled: false });
-      geo.rotateX(-Math.PI / 2);
-      return new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color, roughness: 0.95, metalness: 0.02 }));
+      const geo = new THREE.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: false });
+      geo.rotateX(-Math.PI/2);
+      return new THREE.Mesh(geo, mat(color, 0.95));
     }
 
-    const ground = ringPlate(160, 160, 50, 22, 0.12, 0x2a3530);
-    ground.position.set(4, 0, 0);
+    // --- Terreno, rua e jardim da frente (implantação) ---
+    const pitCX = L/2, pitCZ = W/2;
+    const pitW = L + 2.2, pitD = W + 2.2;
+    const ground = ringPlate(170, 170, pitW, pitD, 0.12, 0x2a3530);
+    ground.position.set(pitCX, 0, pitCZ);
     ground.receiveShadow = true;
     scene.add(ground);
 
-    const street = box(18, 0.08, 70, 0x4c525c, -32, 0.06, 0);
+    const street = box(8, 0.08, 28, 0x4c525c, -14.2, 0.06, pitCZ);
     street.receiveShadow = true;
     scene.add(street);
-    scene.add(box(0.4, 0.18, 70, 0x8a8d90, -23.1, 0.12, 0));
+    scene.add(box(0.35, 0.16, 28, 0x8a8d90, -10.15, 0.12, pitCZ));
 
-    const lote = ringPlate(62, 32, 50, 22, 0.22, 0x5a6a4e);
-    lote.position.set(4, 0.02, 0);
-    addPart(lote, 0, { preview: 'hide', explode: new THREE.Vector3(0, 0, 0) });
+    // lote ao redor da cava (frente, fundos e faixas laterais)
+    const loteF = box(10.2, 0.22, 22, 0x5a6a4e, -5.1, 0.12, pitCZ);
+    addPart(loteF, 0, { preview: 'hide' });
+    const loteB = box(4.2, 0.22, 22, 0x5a6a4e, L + 2.0, 0.12, pitCZ);
+    addPart(loteB, 0, { preview: 'hide' });
+    addPart(box(L+2, 0.22, 2.0, 0x5a6a4e, pitCX, 0.12, -1.15), 0, { preview: 'hide' });
+    addPart(box(L+2, 0.22, 2.0, 0x5a6a4e, pitCX, 0.12, W+1.15), 0, { preview: 'hide' });
 
-    // Earth fills the pit until the first excavation
-    addPart(box(49.6, 7.15, 21.6, 0x5a6a4e, 4, -3.45, 0), 0, {
-      until: A.escava1, preview: 'hide', explode: new THREE.Vector3(0, 0, 0)
-    });
-    addPart(box(49.6, 0.2, 21.6, 0x2b241c, 4, -7.05, 0), A.escava1, {
-      preview: 'hide', explode: new THREE.Vector3(0, 0, 0)
-    });
+    // jardim / floreiras da frente
+    addPart(box(7.2, 0.35, 7.2, 0x4e6a45, -5.4, 0.28, 4.2), 0, { preview: 'hide' });
+    addPart(box(7.2, 0.35, 4.8, 0x4e6a45, -5.4, 0.28, 13.8), 0, { preview: 'hide' });
+    addPart(cyl(0.35, 2.8, 0x2f4a32, -6.6, 1.6, 3.4, 8), 0, { preview: 'hide' });
+    addPart(cyl(1.1, 0.5, 0x3a5a3c, -6.6, 3.1, 3.4, 8), 0, { preview: 'hide' });
+    addPart(cyl(0.3, 2.4, 0x2f4a32, -4.0, 1.4, 14.4, 8), 0, { preview: 'hide' });
+    addPart(cyl(0.9, 0.45, 0x3a5a3c, -4.0, 2.7, 14.4, 8), 0, { preview: 'hide' });
 
-    addPart(box(45.2, 0.5, 17.6, 0x6b6458, 4, -6.85, 0), A.rachao, {
-      explode: new THREE.Vector3(0, 6, 0)
-    });
+    // terra que preenche a cava até a 1ª escavação
+    addPart(box(pitW-0.2, 3.9, pitD-0.2, 0x5a6a4e, pitCX, -1.9, pitCZ), 0, { until: A.escava1, preview: 'hide' });
+    addPart(box(pitW-0.2, 0.2, pitD-0.2, 0x2b241c, pitCX, Y.ss2 - 0.35, pitCZ), A.escava1, { preview: 'hide' });
+    addPart(box(L-0.4, 0.5, W-0.4, 0x6b6458, pitCX, Y.ss2 - 0.15, pitCZ), A.rachao, { explode: new THREE.Vector3(0, 6, 0) });
 
-    const wallColor = 0x8d8a84;
-    function curtain(appear, depthTop, depthBot, lift) {
-      const h = depthBot - depthTop;
-      const y = -(depthTop + depthBot) / 2;
+    // Contenção no perímetro da cava (formato do subsolo, não um bloco único)
+    const wallC = 0x8d8a84;
+    function curtain(appear, yTop, yBot, lift) {
+      const h = yTop - yBot, y = (yTop + yBot) / 2;
       const ex = new THREE.Vector3(0, lift, 0);
-      addPart(box(45.6, h, 0.7, wallColor, 4, y, 8.55), appear, { explode: ex });
-      addPart(box(45.6, h, 0.7, wallColor, 4, y, -8.55), appear, { explode: ex });
-      addPart(box(0.7, h, 16.4, wallColor, -18.45, y, 0), appear, { explode: ex });
-      addPart(box(0.7, h, 16.4, wallColor, 26.45, y, 0), appear, { explode: ex });
-      for (let i = 0; i < 16; i++) {
-        const x = -17.2 + i * (42.4 / 15);
-        addPart(cyl(0.28, h, 0x7c786f, x, y, 8.55), appear, { explode: ex });
-        addPart(cyl(0.28, h, 0x7c786f, x, y, -8.55), appear, { explode: ex });
+      const x0 = -0.9, x1 = L+0.9, z0 = -0.9, z1 = W+0.9;
+      addPart(box(x1-x0, h, 0.55, wallC, (x0+x1)/2, y, z0), appear, { explode: ex });
+      addPart(box(x1-x0, h, 0.55, wallC, (x0+x1)/2, y, z1), appear, { explode: ex });
+      addPart(box(0.55, h, z1-z0-0.55, wallC, x0, y, (z0+z1)/2), appear, { explode: ex });
+      addPart(box(0.55, h, z1-z0-0.55, wallC, x1, y, (z0+z1)/2), appear, { explode: ex });
+      for (let i = 0; i < 14; i++) {
+        const x = 0.4 + i * (L / 13);
+        addPart(cyl(0.22, h, 0x7c786f, x, y, z0, 8), appear, { explode: ex });
+        addPart(cyl(0.22, h, 0x7c786f, x, y, z1, 8), appear, { explode: ex });
       }
     }
-    curtain(A.faseA, -0.35, 2.4, 10);
-    curtain(A.faseB1, 2.4, 4.6, 14);
-    curtain(A.faseC, 4.6, 7.2, 18);
+    curtain(A.faseA, 0.25, -1.6, 10);
+    curtain(A.faseB1, -1.6, -2.9, 14);
+    curtain(A.faseC, -2.9, Y.ss2 - 0.3, 18);
 
     function tiebacks(appear, y, lift, out) {
-      const exP = new THREE.Vector3(0, lift, out);
-      const exN = new THREE.Vector3(0, lift, -out);
-      for (let i = 0; i < 10; i++) {
-        const x = -16 + i * 4.4;
-        addPart(box(0.16, 0.16, 7.2, 0x3a4550, x, y, 12.0), appear, { explode: exP });
-        addPart(box(0.16, 0.16, 7.2, 0x3a4550, x, y, -12.0), appear, { explode: exN });
-        addPart(cyl(0.28, 0.4, 0x2c333b, x, y, 8.9), appear, { explode: exP });
-        addPart(cyl(0.28, 0.4, 0x2c333b, x, y, -8.9), appear, { explode: exN });
+      for (let i = 0; i < 9; i++) {
+        const x = 2 + i * 3.5;
+        addPart(box(0.14, 0.14, 6.5, 0x3a4550, x, y, W + 3.6), appear, { explode: new THREE.Vector3(0, lift, out) });
+        addPart(box(0.14, 0.14, 6.5, 0x3a4550, x, y, -3.6), appear, { explode: new THREE.Vector3(0, lift, -out) });
       }
     }
     tiebacks(A.faseB1, -1.1, 12, 4);
-    tiebacks(A.faseB2, -2.8, 16, 6);
-    tiebacks(A.faseC, -4.6, 20, 8);
+    tiebacks(A.faseB2, -2.4, 16, 6);
+    tiebacks(A.faseC, -3.4, 20, 8);
 
-    const piles = [
-      [-10, -6], [-2, -6], [6, -6], [14, -6], [20, -6],
-      [-10, 0], [-2, 0], [6, 0], [14, 0], [20, 0],
-      [-10, 6], [-2, 6], [6, 6], [14, 6], [20, 6],
-      [-14, -3], [-14, 3], [10, -3], [10, 3]
-    ];
-    for (const [x, z] of piles) {
-      addPart(cyl(0.35, 2.2, 0x6b6258, x + 4, -5.7, z), A.fund, { explode: new THREE.Vector3(0, 20, 0) });
+    // Fundações no miolo da cava
+    for (let i = 0; i < 5; i++) for (let j = 0; j < 3; j++) {
+      const x = 3 + i * 6.5, z = 2.5 + j * 6;
+      if (x > CORE.x-1 && x < CORE.x+CORE.l+1 && z < CORE.w) continue;
+      addPart(cyl(0.32, 2.0, 0x6b6258, x, Y.ss2 + 0.4, z, 8), A.fund, { explode: new THREE.Vector3(0, 20, 0) });
+      addPart(box(1.2, 0.55, 1.2, 0x746e64, x, Y.ss2 + 1.15, z), A.blocos, { explode: new THREE.Vector3(0, 22, 0) });
     }
-    addPart(box(42.5, 0.55, 15.6, 0x7a746a, 4, -4.55, 0), A.blocos, { explode: new THREE.Vector3(0, 22, 0) });
-    for (const [x, z] of piles) {
-      addPart(box(1.3, 0.7, 1.3, 0x746e64, x + 4, -4.4, z), A.blocos, { explode: new THREE.Vector3(0, 22, 0) });
+    addPart(box(L-1.2, 0.45, W-1.2, 0x7a746a, pitCX, Y.ss2 + 1.2, pitCZ), A.blocos, { explode: new THREE.Vector3(0, 22, 0) });
+
+    function slab(l, w, thick, color, x, y, z, appear, lift) {
+      addPart(box(l, thick, w, color, x, y, z), appear, { explode: new THREE.Vector3(0, lift, 0) });
     }
-
-    const ramp = box(8, 0.35, 14, 0xb7ad9a, -21, -3.2, 0);
-    ramp.rotation.z = 0.38;
-    addPart(ramp, A.ss2, { explode: new THREE.Vector3(-8, 18, 0) });
-
-    const floors = [
-      { name: 'Subsolo 2', y: -3.35, appear: A.ss2, color: 0xb9b09c, lift: 26 },
-      { name: 'Subsolo 1', y: -0.25, appear: A.ss1, color: 0xc2b8a4, lift: 32 },
-      { name: 'Térreo', y: 2.85, appear: A.terreo, color: 0xcdc4b0, lift: 38 },
-      { name: '2º pavimento', y: 5.95, appear: A.pav2, color: 0xd8cfbb, lift: 44 }
-    ];
-    const colXs = [-14, -6, 2, 10, 18];
-    const colZs = [-6, 0, 6];
-    for (const fl of floors) {
-      const ex = new THREE.Vector3(0, fl.lift, 0);
-      addPart(box(42, 0.4, 16, fl.color, 4, fl.y, 0), fl.appear, { explode: ex });
-      addPart(box(42, 2.6, 0.22, 0xd6d0c4, 4, fl.y + 1.5, 8.0), fl.appear, { explode: ex });
-      addPart(box(42, 2.6, 0.22, 0xd6d0c4, 4, fl.y + 1.5, -8.0), fl.appear, { explode: ex });
-      addPart(box(0.22, 2.6, 16, 0xd6d0c4, -17, fl.y + 1.5, 0), fl.appear, { explode: ex });
-      addPart(box(0.22, 2.6, 16, 0xd6d0c4, 25, fl.y + 1.5, 0), fl.appear, { explode: ex });
-      if (fl.name !== '2º pavimento') {
-        for (const x of colXs) for (const z of colZs) {
-          addPart(box(0.45, 2.7, 0.45, 0x9a9488, x + 4, fl.y + 1.55, z), fl.appear, { explode: ex });
-        }
+    function wall(l, h, t, color, x, y, z, appear, lift) {
+      addPart(box(l, h, t, color, x, y, z), appear, { explode: new THREE.Vector3(0, lift, 0) });
+    }
+    function windows(len, count, x0, y, z, alongX, appear, lift, color = 0x5b7d94) {
+      const span = len / count;
+      for (let i = 0; i < count; i++) {
+        const cx = alongX ? x0 + (i + 0.5) * span : x0;
+        const cz = alongX ? z : z + (i + 0.5) * span;
+        const w = alongX ? 1.55 : 0.16, d = alongX ? 0.16 : 1.55;
+        addPart(box(w, 1.55, d, color, cx, y, cz), appear, { explode: new THREE.Vector3(0, lift, 0) });
       }
     }
-    addPart(box(42.4, 0.35, 16.4, 0x8b8580, 4, 7.5, 0), A.pav2, { explode: new THREE.Vector3(0, 48, 0) });
 
+    // --- Subsolo 2: estacionamento coberto ---
+    const hSS = 2.35;
+    const ySS2 = Y.ss2 + 0.2;
+    slab(L, W, 0.35, 0x3f4348, pitCX, ySS2, pitCZ, A.ss2, 26);
+    // laje do teto do SS2 / piso SS1
+    slab(L, W, 0.3, 0x8a8580, pitCX, Y.ss1 - 0.05, pitCZ, A.ss2, 26);
+    // paredes perimetrais do garagem, com recorte da rampa no norte (z alto), trecho central
+    wall(L, hSS, 0.28, 0x9a958c, pitCX, ySS2 + hSS/2, 0.14, A.ss2, 26);
+    wall(0.28, hSS, W, 0x9a958c, 0.14, ySS2 + hSS/2, pitCZ, A.ss2, 26);
+    wall(0.28, hSS, W, 0x9a958c, L-0.14, ySS2 + hSS/2, pitCZ, A.ss2, 26);
+    wall(12.2, hSS, 0.28, 0x9a958c, 6.1, ySS2 + hSS/2, W-0.14, A.ss2, 26); // norte, trecho da frente
+    wall(8.0, hSS, 0.28, 0x9a958c, L-4.0, ySS2 + hSS/2, W-0.14, A.ss2, 26); // norte, trecho do fundo
+
+    // vagas SS2 — fileira sul (NORMAL 11 a 5, pulo do núcleo, 4 a 2)
+    const stallC = 0x5b6168, lineC = 0xd8dce0;
+    function stall(x, z, l, w, appear, lift, color = stallC) {
+      addPart(box(l - 0.12, 0.04, w - 0.12, color, x, ySS2 + 0.2, z), appear, { explode: new THREE.Vector3(0, lift, 0) });
+      addPart(box(l - 0.08, 0.03, 0.06, lineC, x, ySS2 + 0.23, z - w/2 + 0.06), appear, { explode: new THREE.Vector3(0, lift, 0) });
+      addPart(box(l - 0.08, 0.03, 0.06, lineC, x, ySS2 + 0.23, z + w/2 - 0.06), appear, { explode: new THREE.Vector3(0, lift, 0) });
+    }
+    // sul, a partir da rua
+    const sulZ = 2.6;
+    for (let i = 0; i < 7; i++) stall(1.4 + 2.45/2 + i*2.45, sulZ, 2.45, 5.0, A.ss2, 26);
+    for (let i = 0; i < 3; i++) stall(CORE.x + CORE.l + 1.1 + i*2.45, sulZ, 2.45, 5.0, A.ss2, 26);
+    // norte: PCD + 2 NORMAL + 12 motos + 1 NORMAL
+    stall(2.1, W-2.7, 3.5, 5.0, A.ss2, 26, 0x3d5a78); // PCD
+    stall(5.7, W-2.7, 2.45, 5.0, A.ss2, 26);
+    stall(8.2, W-2.7, 2.45, 5.0, A.ss2, 26);
+    for (let i = 0; i < 12; i++) stall(13.0 + i*1.15, W-2.0, 1.15, 2.3, A.ss2, 26, 0x555248);
+    stall(28.0, W-2.7, 2.45, 5.0, A.ss2, 26);
+
+    // pilares da garagem
+    const cols = [2, 7.5, 13, 23.5, 29];
+    for (const x of cols) for (const z of [0.45, W-0.45]) {
+      addPart(cyl(0.28, hSS, 0x6e6a63, x, ySS2 + hSS/2, z, 8), A.ss2, { explode: new THREE.Vector3(0, 26, 0) });
+    }
+
+    // núcleo de escada e elevador (sob sobe em todos os pavimentos)
+    function core(y0, h, appear, lift, color = 0x8d887e) {
+      wall(CORE.l, h, 0.25, color, CORE.x + CORE.l/2, y0 + h/2, CORE.z + 0.12, appear, lift);
+      wall(CORE.l, h, 0.25, color, CORE.x + CORE.l/2, y0 + h/2, CORE.z + CORE.w - 0.12, appear, lift);
+      wall(0.25, h, CORE.w, color, CORE.x + 0.12, y0 + h/2, CORE.z + CORE.w/2, appear, lift);
+      wall(0.25, h, CORE.w, color, CORE.x + CORE.l - 0.12, y0 + h/2, CORE.z + CORE.w/2, appear, lift);
+    }
+    core(ySS2, hSS, A.ss2, 26);
+
+    // --- Rampa de veículos (extensão 13,65 m, lado norte, sobe para a rua) ---
+    const ramp = box(14.2, 0.32, 4.4, 0x6a6e74, 4.2, (Y.terreo + Y.ss2)/2, W - 1.6);
+    ramp.rotation.z = Math.atan2((Y.terreo - 0.2) - (Y.ss2 + 0.3), 13.65);
+    addPart(ramp, A.ss2, { explode: new THREE.Vector3(-8, 18, 4) });
+    // guarda-corpo da rampa
+    const rampRail = box(14.2, 0.08, 0.08, 0x4a5560, 4.2, (Y.terreo + Y.ss2)/2 + 0.7, W + 0.5);
+    rampRail.rotation.z = ramp.rotation.z;
+    addPart(rampRail, A.ss2, { explode: new THREE.Vector3(-8, 18, 4) });
+
+    // --- Subsolo 1 ---
+    const ySS1 = Y.ss1 + 0.15;
+    const hSS1 = 2.35;
+    slab(L, W, 0.3, 0x8a8580, pitCX, Y.terreo - 0.08, pitCZ, A.ss1, 32);
+    wall(L, hSS1, 0.28, 0xa39e94, pitCX, ySS1 + hSS1/2, 0.14, A.ss1, 32);
+    wall(0.28, hSS1, W, 0xa39e94, 0.14, ySS1 + hSS1/2, pitCZ, A.ss1, 32);
+    wall(0.28, hSS1, W, 0xa39e94, L-0.14, ySS1 + hSS1/2, pitCZ, A.ss1, 32);
+    wall(12.2, hSS1, 0.28, 0xa39e94, 6.1, ySS1 + hSS1/2, W-0.14, A.ss1, 32);
+    wall(8.0, hSS1, 0.28, 0xa39e94, L-4.0, ySS1 + hSS1/2, W-0.14, A.ss1, 32);
+    // algumas vagas e sanitários / depósitos junto ao núcleo
+    for (let i = 0; i < 5; i++) stall(1.4 + 2.45/2 + i*2.45, sulZ, 2.45, 5.0, A.ss1, 32);
+    stall(2.1, W-2.7, 3.5, 5.0, A.ss1, 32, 0x3d5a78);
+    // salas junto ao núcleo (banheiros / DML)
+    addPart(box(6.2, hSS1-0.2, 4.2, 0xb7b1a6, CORE.x + CORE.l + 3.4, ySS1 + hSS1/2, 3.2), A.ss1, { explode: new THREE.Vector3(0, 32, 0) });
+    core(ySS1, hSS1, A.ss1, 32);
+
+    // --- Térreo: estacionamento descoberto na frente + clínica no fundo ---
+    const yT = Y.terreo + 0.15;
+    const hT = 3.35;
+    const clinX0 = 12.2, clinL = L - clinX0, clinZ0 = 0.2, clinW = W - 0.4;
+    // laje da frente (vagas descobertas) sobre o subsolo
+    slab(clinX0 - 0.2, W, 0.32, 0x7a7e84, clinX0/2, yT, pitCZ, A.terreo, 38);
+    // vagas descobertas (26, 27, 28 e vizinhas)
+    function stallT(x, z, l, w, color = 0x5b6168) {
+      addPart(box(l-0.12, 0.04, w-0.12, color, x, yT + 0.18, z), A.terreo, { explode: new THREE.Vector3(0, 38, 0) });
+    }
+    stallT(3.0, 4.0, 5.0, 2.5);
+    stallT(3.0, 6.6, 5.0, 2.5);
+    stallT(3.0, 9.2, 5.0, 2.5);
+    stallT(8.6, 14.2, 2.5, 5.0); // vagas 28 no fundo da frente
+    stallT(8.6, 11.6, 2.5, 5.0);
+    // pátio / floreira
+    addPart(box(4.2, 0.4, 3.2, 0x4e6a45, 3.2, yT + 0.35, 14.4), A.terreo, { explode: new THREE.Vector3(0, 38, 0) });
+
+    // volume da clínica (retângulo principal no fundo do lote)
+    slab(clinL, clinW, 0.35, 0xcfc8b8, clinX0 + clinL/2, yT, clinZ0 + clinW/2, A.terreo, 38);
+    // paredes
+    wall(clinL, hT, 0.28, 0xd6d0c4, clinX0 + clinL/2, yT + hT/2, clinZ0 + 0.14, A.terreo, 38);
+    wall(clinL, hT, 0.28, 0xd6d0c4, clinX0 + clinL/2, yT + hT/2, clinZ0 + clinW - 0.14, A.terreo, 38);
+    wall(0.28, hT, clinW, 0xd6d0c4, clinX0 + 0.14, yT + hT/2, clinZ0 + clinW/2, A.terreo, 38);
+    wall(0.28, hT, clinW, 0xd6d0c4, clinX0 + clinL - 0.14, yT + hT/2, clinZ0 + clinW/2, A.terreo, 38);
+    // recuo da recepção (entrada voltada para as vagas)
+    addPart(box(3.6, 2.6, 6.2, 0xc5c0b4, clinX0 + 1.7, yT + 1.35, 6.4), A.terreo, { explode: new THREE.Vector3(0, 38, 0) });
+    addPart(box(3.2, 2.1, 0.12, 0x8bb3c9, clinX0 + 0.08, yT + 1.4, 6.4), A.terreo, { explode: new THREE.Vector3(0, 38, 0) }); // vidro da entrada
+    // faixa de consultórios na face norte, ritmada como na planta
+    windows(clinL - 1.2, 6, clinX0 + 0.6, yT + 1.7, clinZ0 + clinW + 0.08, true, A.terreo, 38);
+    windows(clinL - 2, 5, clinX0 + 1.0, yT + 1.7, clinZ0 - 0.08, true, A.terreo, 38);
+    core(yT, hT, A.terreo, 38, 0xb8b3a8);
+    windows(clinW - 2, 4, clinX0 + clinL + 0.08, yT + 1.7, clinZ0 + 1.0, false, A.terreo, 38);
+    // laje de cobertura do térreo / terraço do fundo (onde o 2º não chega)
+    slab(clinL, clinW, 0.3, 0xb9b3a6, clinX0 + clinL/2, Y.pav2 - 0.08, clinZ0 + clinW/2, A.terreo, 38);
+
+    // --- 2º pavimento: volume menor, recuado; terraço descoberto no fundo ---
+    const y2 = Y.pav2 + 0.15;
+    const h2 = 2.85;
+    const p2X0 = 12.2, p2L = 14.2, p2Z0 = 0.3, p2W = 11.4;
+    slab(p2L, p2W, 0.32, 0xd8cfbb, p2X0 + p2L/2, y2, p2Z0 + p2W/2, A.pav2, 44);
+    wall(p2L, h2, 0.28, 0xddd6c8, p2X0 + p2L/2, y2 + h2/2, p2Z0 + 0.14, A.pav2, 44);
+    wall(p2L, h2, 0.28, 0xddd6c8, p2X0 + p2L/2, y2 + h2/2, p2Z0 + p2W - 0.14, A.pav2, 44);
+    wall(0.28, h2, p2W, 0xddd6c8, p2X0 + 0.14, y2 + h2/2, p2Z0 + p2W/2, A.pav2, 44);
+    wall(0.28, h2, p2W, 0xddd6c8, p2X0 + p2L - 0.14, y2 + h2/2, p2Z0 + p2W/2, A.pav2, 44);
+    // painel verde (corte)
+    addPart(box(4.2, 2.2, 0.12, 0x4a7a4e, p2X0 + 5.2, y2 + 1.5, p2Z0 + p2W - 0.08), A.pav2, { explode: new THREE.Vector3(0, 44, 0) });
+    windows(p2L - 5.2, 3, p2X0 + 4.8, y2 + 1.5, p2Z0 + p2W + 0.08, true, A.pav2, 44);
+    windows(p2L - 1, 4, p2X0 + 0.5, y2 + 1.5, p2Z0 - 0.08, true, A.pav2, 44);
+    core(y2, h2, A.pav2, 44, 0xc4bfb4);
+    // terraço descoberto no fundo e na faixa norte — guarda-corpo
+    const terrX = clinX0 + p2L + (clinL - p2L)/2;
+    const terrL = clinL - p2L;
+    // piso do terraço já é a laje do térreo; só o peitoril
+    function rail(l, x, z, appear) {
+      addPart(box(l, 0.08, 0.08, 0x9aa0a6, x, Y.pav2 + 1.05, z), appear, { explode: new THREE.Vector3(0, 44, 0) });
+      for (let i = 0; i < Math.max(2, Math.round(l/1.6)); i++) {
+        addPart(box(0.06, 1.0, 0.06, 0x9aa0a6, x - l/2 + 0.4 + i*1.6, Y.pav2 + 0.55, z), appear, { explode: new THREE.Vector3(0, 44, 0) });
+      }
+    }
+    rail(terrL, clinX0 + p2L + terrL/2, clinZ0 + 0.2, A.pav2);
+    rail(terrL, clinX0 + p2L + terrL/2, clinZ0 + clinW - 0.2, A.pav2);
+    rail(p2W, p2X0 + p2L - 0.1, p2Z0 + p2W + (clinW-p2W)/2, A.pav2);
+    // laje de cobertura do 2º
+    slab(p2L + 0.3, p2W + 0.3, 0.28, 0x8b8580, p2X0 + p2L/2, Y.caixa - 0.05, p2Z0 + p2W/2, A.pav2, 44);
+
+    // --- Caixa d'água (volume menor no topo, 4 reservatórios) ---
+    const yC = Y.caixa + 0.1;
+    const hC = Y.topo - Y.caixa - 0.15;
+    const cX = p2X0 + 8.2, cZ = p2Z0 + 6.2, cL = 6.6, cW = 5.2;
+    slab(cL, cW, 0.25, 0xc4a882, cX, yC, cZ, A.caixa, 48);
+    wall(cL, hC, 0.25, 0xc4a882, cX, yC + hC/2, cZ - cW/2 + 0.12, A.caixa, 48);
+    wall(cL, hC, 0.25, 0xc4a882, cX, yC + hC/2, cZ + cW/2 - 0.12, A.caixa, 48);
+    wall(0.25, hC, cW, 0xc4a882, cX - cL/2 + 0.12, yC + hC/2, cZ, A.caixa, 48);
+    wall(0.25, hC, cW, 0xc4a882, cX + cL/2 - 0.12, yC + hC/2, cZ, A.caixa, 48);
+    // três vãos da fachada da caixa (elevação)
+    for (const dx of [-1.6, 0, 1.6]) {
+      addPart(box(0.7, 0.7, 0.1, 0x2c333b, cX + dx, yC + hC*0.55, cZ + cW/2 - 0.08), A.caixa, { explode: new THREE.Vector3(0, 48, 0) });
+    }
+    addPart(cyl(0.85, 1.3, 0xb7c4cc, cX - 1.4, yC + 0.75, cZ - 0.8, 16), A.caixa, { explode: new THREE.Vector3(0, 48, 0) });
+    addPart(cyl(0.85, 1.3, 0xb7c4cc, cX + 1.4, yC + 0.75, cZ - 0.8, 16), A.caixa, { explode: new THREE.Vector3(0, 48, 0) });
+    addPart(cyl(0.85, 1.3, 0xb7c4cc, cX - 1.4, yC + 0.75, cZ + 0.8, 16), A.caixa, { explode: new THREE.Vector3(0, 48, 0) });
+    addPart(cyl(0.85, 1.3, 0xb7c4cc, cX + 1.4, yC + 0.75, cZ + 0.8, 16), A.caixa, { explode: new THREE.Vector3(0, 48, 0) });
+    slab(cL + 0.25, cW + 0.25, 0.22, 0xb8976c, cX, Y.topo - 0.05, cZ, A.caixa, 48);
+
+    // ticks e UI
     const ticksEl = document.getElementById('ticks');
-    const marks = [
+    for (const m of [
       { t: 0, label: 'Set/26' },
       { t: dateToT(HOJE), label: 'Hoje', now: true },
       { t: T('2027-02-01'), label: 'Estrutura' },
       { t: 1, label: 'Dez/27' }
-    ];
-    for (const m of marks) {
+    ]) {
       const el = document.createElement('div');
       el.className = 'tick' + (m.now ? ' now' : '');
       el.style.left = (m.t * 100) + '%';
@@ -365,40 +462,26 @@
     const etapaDatas = document.getElementById('etapaDatas');
     const lista = document.getElementById('lista');
     const dataLabel = document.getElementById('dataLabel');
-
     function etapaEm(t) {
       let cur = ETAPAS[0];
       for (const e of ETAPAS) if (t + 0.0005 >= T(e.ini)) cur = e;
       return cur;
     }
-
     function apply(t) {
       for (const mesh of parts) {
         const a = mesh.userData.appear;
-        const mat = mesh.material;
-        if (!mat) continue;
-        if (mesh.userData.until != null && t >= mesh.userData.until - 0.0005) {
-          mesh.visible = false;
-          continue;
-        }
-        // Peças futuras ficam totalmente separadas e só descem perto da data de encaixe
+        const matl = mesh.material;
+        if (!matl) continue;
+        if (mesh.userData.until != null && t >= mesh.userData.until - 0.0005) { mesh.visible = false; continue; }
         const janela = 0.05;
         let k = 0;
         if (t < a) k = (t <= a - janela) ? 1 : (a - t) / janela;
         mesh.position.copy(mesh.userData.rest).addScaledVector(mesh.userData.explode, k);
         if (t >= a - 0.0005) {
-          mesh.visible = true;
-          mat.transparent = false;
-          mat.opacity = 1;
-          mat.depthWrite = true;
+          mesh.visible = true; matl.transparent = false; matl.opacity = 1; matl.depthWrite = true;
         } else if (mesh.userData.preview === 'ghost') {
-          mesh.visible = true;
-          mat.transparent = true;
-          mat.opacity = 0.28;
-          mat.depthWrite = false;
-        } else {
-          mesh.visible = false;
-        }
+          mesh.visible = true; matl.transparent = true; matl.opacity = 0.28; matl.depthWrite = false;
+        } else mesh.visible = false;
       }
       const date = tToDate(t);
       const etapa = etapaEm(t);
@@ -407,8 +490,7 @@
       dataLabel.textContent = fmtDate(date) + (Math.abs(t - dateToT(HOJE)) < 0.008 ? '  ·  posição prevista para hoje' : '');
       const feitos = ETAPAS.filter(e => t >= T(e.ini));
       const faltam = ETAPAS.filter(e => t < T(e.ini));
-      lista.innerHTML =
-        feitos.slice(-3).map(e => `<li class="ok">✓ ${e.nome}</li>`).join('') +
+      lista.innerHTML = feitos.slice(-3).map(e => `<li class="ok">✓ ${e.nome}</li>`).join('') +
         faltam.slice(0, 3).map(e => `<li class="no">○ ${e.nome}</li>`).join('');
     }
 
@@ -422,22 +504,15 @@
       slider.value = Math.round(t * 1000);
       apply(t);
     };
-
     function resize() {
-      const w = innerWidth, h = innerHeight;
-      camera.aspect = w / h;
+      camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
-      renderer.setSize(w, h, false);
+      renderer.setSize(innerWidth, innerHeight, false);
     }
     addEventListener('resize', resize);
     resize();
     apply(progress);
-
-    (function loop() {
-      requestAnimationFrame(loop);
-      controls.update();
-      renderer.render(scene, camera);
-    })();
+    (function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
   </script>
 </body>
 </html>
