@@ -21,18 +21,25 @@
     .ui { position: absolute; pointer-events: none; inset: 0; }
     .ui > * { pointer-events: auto; }
     .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(8px); box-shadow: 0 8px 28px #0006; }
-    .top { position: absolute; left: 16px; top: 16px; max-width: 560px; }
+    .top { position: absolute; left: 16px; top: 16px; max-width: 540px; }
     h1 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: .01em; }
     .sub { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
     .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
     .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
-    .info { position: absolute; right: 16px; top: 16px; width: 260px; }
-    .info h2 { margin: 0 0 8px; font-size: 13px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+    .info { position: absolute; right: 16px; top: 16px; width: 240px; }
+    .info h2 { margin: 0 0 8px; font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
     .info .nome { font-size: 16px; font-weight: 650; margin: 0 0 4px; }
     .info .meta { font-size: 12px; color: var(--muted); line-height: 1.45; }
-    .info .empty { font-size: 12px; color: var(--muted); }
-    .bottom { position: absolute; left: 16px; right: 16px; bottom: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px 16px; box-shadow: 0 8px 28px #0006; }
+    .info .empty { font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .bottom { position: absolute; left: 16px; right: 16px; bottom: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 18px 14px; box-shadow: 0 8px 28px #0006; }
+    .bottom-row { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
     .floors { display: flex; gap: 8px; flex-wrap: wrap; }
+    .fluxo-inline { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 340px; justify-content: flex-end; flex-wrap: wrap; }
+    .fluxo-k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; margin-right: 2px; }
+    .fluxo-pill { background: #22303c; border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; font-size: 11px; font-weight: 650; color: var(--text); }
+    .fluxo-pill.on { background: #1a3a4e; border-color: var(--accent); color: #cfe8f6; }
+    .fluxo-arr { color: #e8d29a; font-size: 10px; font-weight: 650; display: flex; flex-direction: column; align-items: center; line-height: 1.15; min-width: 88px; text-align: center; }
+    .fluxo-arr span { color: #9aa8b6; font-size: 9px; font-weight: 600; }
     button { background: #22303c; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 13px; font-size: 12px; cursor: pointer; font-family: inherit; }
     button:hover { border-color: var(--accent); }
     button.on { background: #1a3a4e; border-color: var(--accent); color: #cfe8f6; }
@@ -52,7 +59,7 @@
   <div class="ui">
     <div class="card top">
       <h1>Obra Dr. Clóvis — planta 2D</h1>
-      <div class="sub">Mesmo estilo do protótipo 3D, em planta. Ambientes, vagas, rampa, escada e elevador lidos na planta arquitetônica do Drive. Use os botões para trocar de pavimento.</div>
+      <div class="sub">Absolutta Engenharia. Ambientes, vagas, rampa, escada e elevador lidos na planta 01_ARQ_EX_LAY_R02. Use os botões para trocar de pavimento.</div>
       <div class="legend">
         <span><i class="sw" style="background:#4a4f56"></i>Vaga normal</span>
         <span><i class="sw" style="background:#2c6aa0"></i>PCD</span>
@@ -65,11 +72,14 @@
     </div>
     <div class="card info" id="ficha">
       <h2>Ambiente</h2>
-      <div class="empty">Clique num cômodo, vaga ou na rampa para ver o nome e a área da planta.</div>
+      <div class="empty">Clique num cômodo, vaga ou na rampa para ver o nome e o detalhe da planta.</div>
     </div>
     <div class="bottom">
-      <div class="floors" id="btns"></div>
-      <div class="hint">Arraste para mover e use a roda para aproximar. Norte para cima; a rua fica à esquerda. Áreas e nomes saíram da planta 01_ARQ_EX_LAY_R02. Não publicado no Dash.</div>
+      <div class="bottom-row">
+        <div class="floors" id="btns"></div>
+        <div class="fluxo-inline" id="fluxo"></div>
+      </div>
+      <div class="hint">Arraste para mover e use a roda para aproximar. Norte para cima; a rua fica à esquerda. Não publicado no Dash.</div>
     </div>
   </div>
 <script>
@@ -98,8 +108,8 @@ function room(id, nome, x, z, l, w, kind, area) {
 
 function stallsSS2() {
   const out = [];
-  for (let i = 0; i < 7; i++) out.push(stallDef(0.40 + SW/2 + i*SW - SW/2, sulZ - stallLen/2, SW, stallLen, 11 - i, 'NORMAL'));
-  out.push(stallDef(CORE.x + CORE.l + 1.20 - 1.20, sulZ - stallLen/2, 2.40, stallLen, null, 'IDOSO'));
+  for (let i = 0; i < 7; i++) out.push(stallDef(0.40 + i*SW, sulZ - stallLen/2, SW, stallLen, 11 - i, 'NORMAL'));
+  out.push(stallDef(CORE.x + CORE.l, sulZ - stallLen/2, 2.40, stallLen, null, 'IDOSO'));
   for (let i = 0; i < 4; i++) out.push(stallDef(CORE.x + CORE.l + 2.40 + i*SW, sulZ - stallLen/2, SW, stallLen, 4 - i, 'NORMAL'));
   out.push(stallDef(0.50, nZ - stallLen/2, 2.50, stallLen, 12, 'PCD'));
   out.push(stallDef(0.50 + 2.50 + 1.20, nZ - stallLen/2, SW, stallLen, 13, 'NORMAL'));
@@ -118,18 +128,58 @@ function stallsSS1() {
   out.push(stallDef(0.40, sulZ - stallLen/2, SW, stallLen, 20, 'NORMAL'));
   out.push(stallDef(0.40 + SW, sulZ - stallLen/2, SW, stallLen, 21, 'NORMAL'));
   out.push(stallDef(0.40 + 2*SW, sulZ - stallLen/2, 2.50, stallLen, 22, 'PCD'));
-  out.push(stallDef(CORE.x + CORE.l + 1.20 - 1.20, sulZ - stallLen/2, 2.40, stallLen, null, 'IDOSO'));
+  out.push(stallDef(CORE.x + CORE.l, sulZ - stallLen/2, 2.40, stallLen, null, 'IDOSO'));
   out.push(stallDef(CORE.x + CORE.l + 2.40, sulZ - stallLen/2, SW, stallLen, 23, 'NORMAL'));
   out.push(stallDef(CORE.x + CORE.l + 2.40 + SW, sulZ - stallLen/2, SW, stallLen, 24, 'NORMAL'));
   out.push(stallDef(CORE.x + CORE.l + 2.40 + 2*SW, sulZ - stallLen/2, 2.50, stallLen, 25, 'PCD'));
   return out;
 }
 
-const RAMP_SS = {
-  tipo: 'ramp', nome: 'Rampa de acesso ao subsolo',
-  area: 'Extensão 13,65 m · inclinação 19,05%',
-  pts: [ [8.2, 12.55], [22.0, 12.55], [24.6, 16.85], [8.2, 16.85] ]
-};
+const RAMP_INT = { x: 8.20, z: 12.50, l: 13.65, w: 4.20 };
+const RAMP_RUA = { x: -0.15, z: 7.40, l: 3.67, w: 5.00 };
+
+function rampInt(pav) {
+  const sobe = pav === 'ss2';
+  return {
+    tipo: 'ramp', role: 'interna',
+    ...RAMP_INT,
+    dir: sobe ? 1 : -1,
+    verb: sobe ? 'SOBE' : 'DESCE',
+    from: sobe ? 'Subsolo 2' : 'Subsolo 1',
+    to: sobe ? 'Subsolo 1' : 'Subsolo 2',
+    nome: 'Rampa interna',
+    area: 'Extensão 13,65 m · inclinação 19,05%',
+    desc: sobe
+      ? 'Neste pavimento a rampa sobe para o Subsolo 1. Ela não dá na rua: o acesso da rua fica no Subsolo 1, pelo portão a oeste.'
+      : 'Neste pavimento a rampa desce para o Subsolo 2, no lado norte, entre as muretas de 1,30 m.'
+  };
+}
+function rampRua() {
+  return {
+    tipo: 'ramp', role: 'acesso',
+    ...RAMP_RUA,
+    dir: 1,
+    verb: 'DESCE',
+    from: 'Rua',
+    to: 'Subsolo 1',
+    nome: 'Rampa de acesso da rua',
+    area: 'Extensão 3,67 m · inclinação 13,61% · portão de rolo 5,00 × 2,44 m',
+    desc: 'O carro entra pela Rua Desembargador Vieira Cavalcanti, passa no portão de rolo e desce para o Subsolo 1.'
+  };
+}
+function rampBoca() {
+  return {
+    tipo: 'ramp', role: 'boca',
+    ...RAMP_RUA,
+    dir: 1,
+    verb: 'DESCE',
+    from: 'Rua',
+    to: 'Subsolo 1',
+    nome: 'Acesso de veículos ao subsolo',
+    area: 'Boca da rampa no térreo, lado oeste, junto à rua',
+    desc: 'Aqui o carro deixa o térreo e desce a rampa de acesso até o Subsolo 1. A rampa que liga os dois subsolos fica no lado norte, só aparece no SS1 e no SS2.'
+  };
+}
 
 function coreRooms(pav) {
   return [
@@ -141,41 +191,39 @@ function coreRooms(pav) {
 const DATA = {
   ss2: {
     titulo: 'Subsolo 2 — estacionamento coberto',
-    nota: '551,86 m² na planta. Rampa sobe no lado norte, rumo à rua.',
+    nota: '551,86 m² na planta. A rampa do lado norte sobe para o Subsolo 1.',
     slab: [0, 0, L, W],
     items: [
       ...stallsSS2(),
       ...coreRooms('ss2'),
-      RAMP_SS,
-      { tipo: 'label', x: L/2, z: W/2, text: 'ESTACIONAMENTO COBERTO', sub: 'SUBSOLO 2' }
+      rampInt('ss2'),
+      { tipo: 'label', x: L/2, z: 8.4, text: 'ESTACIONAMENTO COBERTO', sub: 'SUBSOLO 2' }
     ]
   },
   ss1: {
     titulo: 'Subsolo 1 — estacionamento coberto',
-    nota: 'Rampa desce da rua (portão a oeste) e segue no lado norte. Gerador junto à vaga 20.',
+    nota: 'A rampa a oeste desce da rua. A rampa do lado norte desce para o Subsolo 2.',
     slab: [0, 0, L, W],
     items: [
       ...stallsSS1(),
       ...coreRooms('ss1'),
       room('gerador', 'Gerador', 0.35, 0.35, 2.4, 2.3, 'room', '5,47 m²'),
-      RAMP_SS,
-      { tipo: 'ramp', nome: 'Rampa — descida da rua (portão)', area: 'Liga a rua ao subsolo 1, lado oeste',
-        pts: [[-0.2, 7.4], [7.6, 7.4], [7.6, 11.6], [-0.2, 11.6]] },
-      { tipo: 'label', x: L/2, z: 9.2, text: 'ESTACIONAMENTO COBERTO', sub: 'SUBSOLO 1' }
+      rampInt('ss1'),
+      rampRua(),
+      { tipo: 'label', x: L/2, z: 8.4, text: 'ESTACIONAMENTO COBERTO', sub: 'SUBSOLO 1' }
     ]
   },
   terreo: {
     titulo: 'Térreo — clínica e acesso',
-    nota: 'Recepção na entrada, consultórios e salas de exame conforme a planta baixa.',
+    nota: 'A boca da rampa de veículos fica a oeste, na rua. Recepção na entrada sul da clínica.',
     slab: [clinX0, 0.2, L - clinX0, W - 0.4],
     patio: true,
     items: [
-      stallDef(1.90, 4.90, 2.50, 5.00, 27, 'NORMAL'),
-      stallDef(4.50, 4.90, 2.50, 5.00, 26, 'NORMAL'),
+      stallDef(3.80, 4.90, 2.50, 5.00, 27, 'NORMAL'),
+      stallDef(6.40, 4.90, 2.50, 5.00, 26, 'NORMAL'),
       stallDef(6.10, 12.50, 5.00, 2.50, 28, 'NORMAL', 1),
       stallDef(6.10, 9.90, 5.00, 2.50, 29, 'NORMAL', 1),
-      { tipo: 'ramp', nome: 'Rampa — acesso da rua ao subsolo', area: 'Projeção da rampa no térreo, lado norte',
-        pts: [[0.2, 15.15], [11.8, 15.15], [11.8, 16.95], [0.2, 16.95]] },
+      rampBoca(),
       room('recepcao', 'Recepção / espera', 12.35, 0.35, 4.15, 7.70, 'wait', '22,66 m²'),
       room('floreira', 'Floreira', 12.45, 0.40, 1.70, 0.70, 'circ'),
       ...coreRooms('terreo'),
@@ -204,14 +252,12 @@ const DATA = {
   },
   pav2: {
     titulo: '2º pavimento — pediatria e terraço',
-    nota: 'Volume menor que o térreo, com terraço descoberto ao norte e a leste.',
+    nota: 'Volume menor que o térreo, com terraço descoberto ao norte e a leste. Não há rampa neste pavimento.',
     slab: [12.2, 0.3, 14.2, 11.4],
     terrazo: true,
     items: [
-      { tipo: 'terrazo', nome: 'Terraço descoberto', area: '175,12 m²',
-        x: 12.2, z: 11.7, l: 20.35, w: 5.38 },
-      { tipo: 'terrazo', nome: 'Terraço descoberto', area: '175,12 m²',
-        x: 26.4, z: 0.3, l: 6.15, w: 11.4 },
+      { tipo: 'terrazo', nome: 'Terraço descoberto', area: '175,12 m²', x: 12.2, z: 11.7, l: 20.35, w: 5.38 },
+      { tipo: 'terrazo', nome: 'Terraço descoberto', area: '175,12 m²', x: 26.4, z: 0.3, l: 6.15, w: 11.4 },
       room('ped01', 'Consultório de pediatria 01', 12.40, 7.90, 3.85, 3.60, 'consult', '13,67 m²'),
       room('ped02', 'Consultório de pediatria 02', 16.35, 7.90, 3.40, 3.60, 'consult', '12,73 m²'),
       room('c06', 'Consultório indiferenciado 06', 19.85, 7.90, 4.55, 3.60, 'consult', '12,73 m²'),
@@ -238,7 +284,7 @@ const DATA = {
   }
 };
 
-function y(z) { return W - z; } // norte para cima
+function y(z) { return W - z; }
 function fillKind(k) {
   return { stall:'var(--stall)', NORMAL:'var(--stall)', PCD:'var(--pcd)', IDOSO:'var(--idoso)', MOTO:'var(--moto)',
            consult:'var(--room-consult)', wet:'var(--room-wet)', wait:'var(--room-wait)', circ:'var(--room-circ)',
@@ -247,7 +293,7 @@ function fillKind(k) {
 
 let current = 'terreo';
 let selected = null;
-let view = { x: 10, y: 8.6, s: 18 }; // center in meters, scale px/m (updated on resize)
+let view = { x: 10, y: 8.6, s: 18 };
 
 const stage = document.getElementById('stage');
 
@@ -265,32 +311,113 @@ function showFicha(it) {
   selected = it;
   const box = document.getElementById('ficha');
   if (!it) {
-    box.innerHTML = '<h2>Ambiente</h2><div class="empty">Clique num cômodo, vaga ou na rampa para ver o nome e a área da planta.</div>';
+    box.innerHTML = '<h2>Ambiente</h2><div class="empty">Clique num cômodo, vaga ou na rampa para ver o nome e o detalhe da planta.</div>';
     document.querySelectorAll('.room').forEach(el => el.classList.remove('on'));
     return;
   }
   const pav = FLOORS.find(f => f.id === current).nome;
   const area = it.area ? `<div class="meta">${it.area}</div>` : '';
+  const desc = it.desc ? `<div class="meta" style="margin-top:6px">${it.desc}</div>` : '';
   const tipo = it.tipo === 'stall' ? `Vaga ${it.kind === 'NORMAL' ? 'normal' : it.kind}` :
-               it.tipo === 'ramp' ? 'Acesso' : it.tipo === 'terrazo' ? 'Área externa' : 'Ambiente interno';
-  box.innerHTML = `<h2>${pav}</h2><div class="nome">${itemLabel(it)}</div><div class="meta">${tipo}</div>${area}`;
+               it.tipo === 'ramp' ? 'Rampa de veículos' : it.tipo === 'terrazo' ? 'Área externa' : 'Ambiente interno';
+  box.innerHTML = `<h2>${pav}</h2><div class="nome">${itemLabel(it)}</div><div class="meta">${tipo}</div>${area}${desc}`;
 }
 
-function hatchRamp() {
+function renderFluxo() {
+  const on = (id) => current === id ? ' on' : '';
+  document.getElementById('fluxo').innerHTML = `
+    <span class="fluxo-k">Fluxo da rampa</span>
+    <span class="fluxo-pill${on('terreo')}">Rua</span>
+    <span class="fluxo-arr">DESCE →<span>3,67 m · i=13,61%</span></span>
+    <span class="fluxo-pill${on('ss1')}">Subsolo 1</span>
+    <span class="fluxo-arr">DESCE →<span>13,65 m · i=19,05%</span></span>
+    <span class="fluxo-pill${on('ss2')}">Subsolo 2</span>`;
+}
+
+function defs() {
   return `<defs>
     <pattern id="rampH" width="0.55" height="0.55" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <rect width="0.55" height="0.55" fill="#3a3220"/>
-      <rect width="0.28" height="0.55" fill="#c4a35a"/>
+      <rect width="0.55" height="0.55" fill="#2f2a1c"/>
+      <rect width="0.22" height="0.55" fill="#c4a35a" opacity="0.85"/>
     </pattern>
     <pattern id="terH" width="0.7" height="0.7" patternUnits="userSpaceOnUse">
       <rect width="0.7" height="0.7" fill="#2e382c"/>
       <path d="M0 0.7 L0.7 0" stroke="#4e6a45" stroke-width="0.04"/>
     </pattern>
+    <pattern id="asphalt" width="1.2" height="1.2" patternUnits="userSpaceOnUse">
+      <rect width="1.2" height="1.2" fill="#3a3f46"/>
+      <rect width="0.06" height="1.2" fill="#444a52"/>
+    </pattern>
+    <filter id="slabSh" x="-2%" y="-2%" width="104%" height="108%">
+      <feDropShadow dx="0" dy="0.12" stdDeviation="0.18" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
   </defs>`;
 }
 
-function poly(pts) {
-  return pts.map(p => `${p[0]},${y(p[1])}`).join(' ');
+function chevrons(x, z, l, w, dir) {
+  const cy = y(z + w/2);
+  const n = Math.max(2, Math.floor((l - 1.6) / 1.35));
+  let s = `<line x1="${x+0.4}" y1="${cy}" x2="${x+l-0.4}" y2="${cy}" stroke="#e8d29a" stroke-width="0.045" stroke-dasharray="0.25 0.18" opacity="0.8"/>`;
+  for (let i = 0; i < n; i++) {
+    const t = (i + 0.7) / (n + 0.4);
+    const cx = dir === 1 ? x + t * l : x + l - t * l;
+    if (dir === 1) s += `<polygon points="${cx+0.38},${cy} ${cx-0.22},${cy-0.26} ${cx-0.22},${cy+0.26}" fill="#f0d78a"/>`;
+    else s += `<polygon points="${cx-0.38},${cy} ${cx+0.22},${cy-0.26} ${cx+0.22},${cy+0.26}" fill="#f0d78a"/>`;
+  }
+  return s;
+}
+
+function badge(tx, tz, label, sub) {
+  const tw = Math.max(2.4, Math.max(label.length, (sub||'').length) * 0.26 + 0.55);
+  const th = sub ? 0.95 : 0.62;
+  const top = y(tz) - th - 0.35;
+  return `<g pointer-events="none">
+    <rect x="${tx-tw/2}" y="${top}" width="${tw}" height="${th}" rx="0.12" fill="#161d25" stroke="#e8d29a" stroke-width="0.05"/>
+    <text class="lab xs" x="${tx}" y="${top + (sub ? 0.38 : 0.42)}" fill="#f0d78a">${label}</text>
+    ${sub ? `<text class="lab xs" x="${tx}" y="${top + 0.74}" fill="#c5d0da">${sub}</text>` : ''}
+  </g>`;
+}
+
+function drawRamp(it, i) {
+  const { x, z, l, w, role, dir, verb } = it;
+  const cy = z + w/2;
+  const cx = x + l/2;
+  let s = `<g class="room" data-i="${i}">`;
+  s += `<rect class="fill" x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="url(#rampH)" stroke="#e8d29a" stroke-width="0.09"/>`;
+  if (role === 'interna') {
+    s += `<rect x="${x}" y="${y(z+w)}" width="${l}" height="0.18" fill="#6a6248" pointer-events="none"/>`;
+    s += `<rect x="${x}" y="${y(z)}" width="${l}" height="0.18" fill="#6a6248" pointer-events="none"/>`;
+  }
+  if (role === 'acesso' || role === 'boca') {
+    const gx = x + l;
+    s += `<line x1="${gx}" y1="${y(z)}" x2="${gx}" y2="${y(z+w)}" stroke="#f0d78a" stroke-width="0.1" stroke-dasharray="0.22 0.14"/>`;
+    s += `<text class="lab xs" x="${gx+0.28}" y="${y(cy)+0.1}" fill="#f0d78a">PORTÃO</text>`;
+  }
+  s += chevrons(x, z, l, w, dir);
+  if (role === 'boca') {
+    s += `<text class="lab sm" x="${cx}" y="${y(cy)+0.08}" fill="#f0d78a">ACESSO DE VEÍCULOS</text>`;
+    s += `<text class="lab xs" x="${cx}" y="${y(cy)+0.48}">DESCE PARA O SUBSOLO 1</text>`;
+  } else if (role === 'acesso') {
+    s += `<text class="lab sm" x="${cx}" y="${y(cy)+0.08}" fill="#f0d78a">RAMPA DA RUA</text>`;
+    s += `<text class="lab xs" x="${cx}" y="${y(cy)+0.48}">DESCE · i=13,61%</text>`;
+  } else {
+    s += `<text class="lab" x="${cx}" y="${y(cy)+0.12}" fill="#f8e7b0">RAMPA INTERNA</text>`;
+    s += `<text class="lab xs" x="${cx}" y="${y(cy)+0.52}">${verb} · i=19,05% · 13,65 m</text>`;
+  }
+  s += `</g>`;
+  if (role === 'interna') {
+    if (dir === 1) {
+      s += badge(x + 2.05, z + 0.85, 'DESTE PISO', 'Subsolo 2');
+      s += badge(x + l - 2.15, z + 0.85, 'SOBE', 'para o Subsolo 1');
+    } else {
+      s += badge(x + 2.15, z + 0.85, 'DESCE', 'para o Subsolo 2');
+      s += badge(x + l - 2.05, z + 0.85, 'DESTE PISO', 'Subsolo 1');
+    }
+  } else {
+    s += badge(x - 1.15, cy, 'RUA', '');
+    s += badge(x + l + 1.35, cy, 'DESCE', 'ao Subsolo 1');
+  }
+  return s;
 }
 
 function drawStall(it, i) {
@@ -315,9 +442,17 @@ function drawRoom(it, i) {
   const texts = lines.map((ln, k) => `<text class="lab ${fs}" x="${cx}" y="${ty + k*0.4}">${ln}</text>`).join('');
   const area = it.area && it.w > 2 && it.l > 2 ? `<text class="area" x="${cx}" y="${ty + lines.length*0.4}">${it.area}</text>` : '';
   const stroke = it.kind === 'elv' ? '#8fd0ff' : 'var(--room-stroke)';
+  let extra = '';
+  if (it.kind === 'core') {
+    const treads = 9;
+    for (let k = 1; k < treads; k++) {
+      const zy = y(it.z + it.w * k / treads);
+      extra += `<line x1="${it.x+0.12}" y1="${zy}" x2="${it.x+it.l-0.12}" y2="${zy}" stroke="#8a9aaa" stroke-width="0.04" pointer-events="none"/>`;
+    }
+  }
   return `<g class="room" data-i="${i}">
     <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="${fill}" stroke="${stroke}" stroke-width="0.07"/>
-    ${texts}${area}
+    ${extra}${texts}${area}
   </g>`;
 }
 
@@ -337,19 +472,23 @@ function wrap(s, n) {
 function siteLayer() {
   let s = '';
   s += `<rect x="-22" y="${y(W+18)}" width="80" height="50" fill="#1a221c"/>`;
-  s += `<rect x="-18" y="${y(W+4)}" width="8" height="${W+8}" fill="#3a3f46"/>`;
+  s += `<rect x="-18" y="${y(W+4)}" width="8" height="${W+8}" fill="url(#asphalt)"/>`;
   s += `<rect x="-10.2" y="${y(W+4)}" width="0.35" height="${W+8}" fill="#9aa0a6"/>`;
-  s += `<text class="lab muted" x="-14.1" y="${y(W/2)}" transform="rotate(-90 -14.1 ${y(W/2)})">RUA DESEMBARGADOR VIEIRA CAVALCANTI</text>`;
-  // gramado ao redor
+  s += `<line x1="-14.2" y1="${y(W+3)}" x2="-14.2" y2="${y(-3)}" stroke="#c8c234" stroke-width="0.08" stroke-dasharray="0.8 0.45"/>`;
+  s += `<text class="lab muted" x="-16.3" y="${y(3.2)}" transform="rotate(-90 -16.3 ${y(3.2)})">RUA DESEMBARGADOR VIEIRA CAVALCANTI</text>`;
+  const ez = RAMP_RUA.z + RAMP_RUA.w/2;
+  s += `<polygon points="-10.35,${y(ez)} -12.2,${y(ez)-0.5} -12.2,${y(ez)+0.5}" fill="#f0d78a"/>`;
   s += `<rect x="-8.8" y="${y(W+2.2)}" width="8.6" height="${W+4.4}" fill="#2a3828"/>`;
   s += `<rect x="${L+0.2}" y="${y(W+2.2)}" width="4.2" height="${W+4.4}" fill="#2a3828"/>`;
   s += `<rect x="-0.4" y="${y(-0.2)}" width="${L+0.8}" height="2.0" fill="#2a3828"/>`;
   s += `<rect x="-0.4" y="${y(W+2.2)}" width="${L+0.8}" height="2.0" fill="#2a3828"/>`;
-  // árvores simples
-  for (const [tx, tz, r] of [[-6.6, 3.4, 1.2], [-4.0, 14.4, 1.0], [-7.4, 12.2, 0.9], [-3.2, 5.1, 1.05]]) {
+  for (const [tx, tz, r] of [[-6.6, 3.4, 1.2], [-4.0, 14.4, 1.0], [-7.0, 15.8, 0.9], [-3.2, 5.1, 1.05]]) {
     s += `<circle cx="${tx}" cy="${y(tz)}" r="${r}" fill="#3d5a38" stroke="#4a6e44" stroke-width="0.08"/>`;
     s += `<circle cx="${tx}" cy="${y(tz)}" r="0.18" fill="#5a4030"/>`;
   }
+  s += `<rect x="-9.7" y="${y(ez)-2.05}" width="5.1" height="1.25" rx="0.12" fill="#161d25" stroke="#f0d78a" stroke-width="0.05"/>`;
+  s += `<text class="lab xs" x="-7.15" y="${y(ez)-1.58}" fill="#f0d78a">ENTRADA</text>`;
+  s += `<text class="lab xs" x="-7.15" y="${y(ez)-1.12}" fill="#f0d78a">DE VEÍCULOS</text>`;
   return s;
 }
 
@@ -366,11 +505,15 @@ function northAndScale() {
   </g>`;
 }
 
+function titleBlock(d) {
+  return `<text class="lab muted" x="${L/2}" y="${y(-2.4)}" font-size="0.42">${d.titulo}</text>`;
+}
+
 function drawFloor(id) {
   const d = DATA[id];
-  let s = hatchRamp() + siteLayer();
-  // lote / laje
-  s += `<rect x="0" y="${y(W)}" width="${L}" height="${W}" fill="#1c2228" stroke="#5a6b7c" stroke-width="0.12"/>`;
+  let s = defs() + siteLayer();
+  s += `<rect x="0" y="${y(W)}" width="${L}" height="${W}" fill="#1c2228" stroke="#8a9aaa" stroke-width="0.18" filter="url(#slabSh)"/>`;
+  s += `<rect x="0.12" y="${y(W)-0.12}" width="${L-0.24}" height="${W-0.24}" fill="none" stroke="#3a4552" stroke-width="0.06"/>`;
   if (d.slab) {
     const [x,z,l,w] = d.slab;
     s += `<rect x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="#242b32" stroke="#6a7a88" stroke-width="0.1"/>`;
@@ -383,13 +526,8 @@ function drawFloor(id) {
   d.items.forEach((it, i) => {
     if (it.tipo === 'stall') s += drawStall(it, i);
     else if (it.tipo === 'room') s += drawRoom(it, i);
-    else if (it.tipo === 'ramp') {
-      s += `<g class="room" data-i="${i}">
-        <polygon class="fill" points="${poly(it.pts)}" fill="url(#rampH)" stroke="#e8d29a" stroke-width="0.08"/>
-        <text class="lab" x="${(it.pts[0][0]+it.pts[1][0])/2}" y="${y((it.pts[0][1]+it.pts[2][1])/2)+0.1}">RAMPA</text>
-        <text class="lab xs" x="${(it.pts[0][0]+it.pts[1][0])/2}" y="${y((it.pts[0][1]+it.pts[2][1])/2)+0.45}">${id==='ss2'?'SOBE · 19,05%': id==='ss1' && it.pts[0][0]<0 ? 'DESCE · PORTÃO DA RUA' : 'DESCE · 19,05%'}</text>
-      </g>`;
-    } else if (it.tipo === 'terrazo') {
+    else if (it.tipo === 'ramp') s += drawRamp(it, i);
+    else if (it.tipo === 'terrazo') {
       s += `<g class="room" data-i="${i}">
         <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="url(#terH)" stroke="#7a8b6a" stroke-width="0.08"/>
       </g>`;
@@ -400,16 +538,14 @@ function drawFloor(id) {
       if (it.sub) s += `<text class="lab xs" x="${it.x}" y="${y(it.z)+0.4}">${it.sub}</text>`;
     }
   });
-  // núcleo: marcar o poço
   s += `<rect x="${ELV.x0}" y="${y(ELV.z0+ELV.d)}" width="${ELV.w}" height="${ELV.d}" fill="none" stroke="#8fd0ff" stroke-width="0.08" pointer-events="none"/>`;
   s += northAndScale();
+  s += titleBlock(d);
   return s;
 }
 
 function viewBox() {
   const w = stage.clientWidth || 1280, h = stage.clientHeight || 800;
-  const sx = w / view.s, sy = h / (view.s * (w/h === 0 ? 1 : w/h));
-  // view.s = meters visible in X
   const mx = view.s;
   const my = view.s * (h / w);
   return `${view.x - mx/2} ${y(view.y) - my/2} ${mx} ${my}`;
@@ -427,6 +563,7 @@ function render() {
       showFicha(it);
     });
   });
+  renderFluxo();
 }
 
 const btns = document.getElementById('btns');
@@ -440,20 +577,20 @@ FLOORS.forEach(f => {
     selected = null;
     showFicha(null);
     document.querySelectorAll('#btns button').forEach(x => x.classList.toggle('on', x.dataset.id === current));
+    history.replaceState(null, '', '#' + f.id);
     render();
   });
   btns.appendChild(b);
 });
 btns.querySelector('[data-id="terreo"]').classList.add('on');
 
-// pan / zoom
 let dragging = false, last = null;
 stage.addEventListener('pointerdown', e => { dragging = true; last = {x:e.clientX,y:e.clientY}; stage.classList.add('drag'); stage.setPointerCapture(e.pointerId); });
 stage.addEventListener('pointerup', () => { dragging = false; last = null; stage.classList.remove('drag'); });
 stage.addEventListener('pointermove', e => {
   if (!dragging || !last) return;
   const w = stage.clientWidth, h = stage.clientHeight;
-  const mx = view.s / w, my = (view.s * h / w) / h;
+  const mx = view.s / w;
   view.x -= (e.clientX - last.x) * mx;
   view.y += (e.clientY - last.y) * (view.s * h / w) / h;
   last = {x:e.clientX,y:e.clientY};
@@ -473,11 +610,8 @@ if (DATA[hash]) {
   current = hash;
   document.querySelectorAll('#btns button').forEach(x => x.classList.toggle('on', x.dataset.id === current));
 }
-document.querySelectorAll('#btns button').forEach(b => {
-  b.addEventListener('click', () => { history.replaceState(null, '', '#' + b.dataset.id); });
-});
-view.s = 48;
-view.x = 12;
+view.s = 52;
+view.x = 9.2;
 view.y = 8;
 render();
 </script>
