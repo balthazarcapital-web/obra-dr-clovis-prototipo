@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" href="data:," />
   <title>Obra Dr. Clóvis — andamento da construção</title>
-  <!-- visual-v7-rampa-ss1 -->
+  <!-- visual-v8-blender -->
   <script type="importmap">
   { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
   </script>
@@ -46,14 +47,24 @@
     button.on { background: #1a3a4e; border-color: var(--accent); color: #cfe8f6; }
     .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.4; }
     @media (max-width: 700px) { .top { flex-direction: column; } .info { max-width: none; } }
+      #loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 12px; background: radial-gradient(#1b2530, #0f1419); z-index: 5; transition: opacity .6s; }
+    #loading .bar { width: 260px; height: 6px; border-radius: 3px; background: #2a3542; overflow: hidden; }
+    #loading .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+    #loading span { font-size: 13px; color: var(--muted); }
+    #fade { position: absolute; inset: 0; background: #0b0f13; opacity: 0; pointer-events: none; z-index: 3; }
+    button.tour { background: #143a2c; border-color: #2f7a57; color: #bff0d6; }
+    button.tour.on { background: #2f7a57; color: #fff; }
+    body.touring .top, body.touring .hint { opacity: .25; transition: opacity .4s; }
   </style>
 </head>
 <body>
   <canvas id="c"></canvas>
+  <div id="fade"></div>
+  <div id="loading"><div class="title">Obra Dr. Clóvis</div><div class="bar"><i id="loadBar"></i></div><span id="loadTxt">Carregando modelo 3D…</span></div>
   <div class="top">
     <div class="card">
       <div class="title">Obra Dr. Clóvis — andamento da construção</div>
-      <div class="sub">Ambientes internos lidos nas plantas do térreo e do 2º pavimento. A rampa da rua entra no subsolo 1 (portão oeste); dali, outra rampa sobre as motos desce para o subsolo 2. Vagas numeradas como no projeto. Use os botões para ver cada pavimento e a rampa.</div>
+      <div class="sub">Modelo 3D feito no Blender a partir das plantas (fachada, ambientes, vagas e rampas). A rampa da rua entra no subsolo 1 pelo portão oeste; dali, outra rampa sobre as motos desce para o subsolo 2. Use os botões para ver cada pavimento, a rampa ou fazer o passeio pela obra.</div>
       <div class="legend">
         <span><i class="sw" style="background:#3dba7a"></i>Já feito</span>
         <span><i class="sw" style="background:#7a8b9c;opacity:.45"></i>Ainda falta</span>
@@ -86,12 +97,20 @@
       <button type="button" id="btnTerreo">Ver térreo</button>
       <button type="button" id="btnPav2">Ver 2º pavimento</button>
       <button type="button" id="btnRampa">Ver rampa de acesso</button>
+      <button type="button" class="tour" id="btnTour">▶ Passeio pela obra</button>
     </div>
-    <div class="hint">Arraste a barra para montar ou desmontar. Gire o modelo e use a roda para aproximar. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volumes aproximados a partir das plantas, não um modelo de engenharia. Não publicado no Dash.</div>
+    <div class="hint">Arraste a barra para montar ou desmontar. Gire o modelo e use a roda para aproximar. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
   </div>
-  <script type="module">
+    <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+    import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+    import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+    import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
+    import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
     if (!CanvasRenderingContext2D.prototype.roundRect) {
       CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
         r = Math.min(r, w/2, h/2);
@@ -99,11 +118,17 @@
         this.arcTo(x,y+h,x,y,r); this.arcTo(x,y,x+w,y,r); this.closePath();
       };
     }
+    const MODEL_URL = 'modelo/obra-dr-clovis.glb';
+    const SKY_URL = 'modelo/ceu_1k.hdr';
+    const DRACO_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/';
+    const params = new URLSearchParams(location.search);
+    const USE_AO = params.get('ao') !== '0';
 
     const INICIO = new Date(2026, 8, 8);
     const FIM = new Date(2027, 11, 31);
-    const HOJE = new Date(2026, 10, 11);
     function parseISO(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
+    // 'Hoje' = data real no fuso de São Paulo
+    const HOJE = parseISO(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()));
     function dateToT(date) { return Math.min(1, Math.max(0, (date.getTime()-INICIO.getTime())/(FIM.getTime()-INICIO.getTime()))); }
     function tToDate(t) { return new Date(INICIO.getTime() + t*(FIM.getTime()-INICIO.getTime())); }
     function fmt(s) { const [y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
@@ -128,31 +153,27 @@
       { nome: 'Blocos e baldrame', ini: '2027-01-13', fim: '2027-01-20' },
       { nome: 'Estrutura (subsolos, térreo e 2º pavimento)', ini: '2027-02-01', fim: '2027-12-31' }
     ];
+    // Chaves de etapa gravadas no GLB (extras.ap / extras.until)
     const A = {
+      zero: 0, demol: T('2026-09-18'),
       rachao: T('2026-09-16'), faseA: T('2026-10-01'), escava1: T('2026-10-19'),
       faseB1: T('2026-10-14'), escava2: T('2026-11-03'), faseB2: T('2026-11-10'),
       escava3: T('2026-11-30'), faseC: T('2026-12-07'), escavaF: T('2026-12-21'),
       fund: T('2027-01-05'), blocos: T('2027-01-13'),
       ss2: T('2027-02-01'), ss1: T('2027-05-01'), terreo: T('2027-08-01'),
-      pav2: T('2027-11-01'), caixa: T('2027-12-01')
+      pav2: T('2027-11-01'), caixa: T('2027-12-01'), acab: T('2027-12-15')
     };
-
-    // Cotas lidas nas plantas (cm viraram metros). X: rua → fundo. Z: largura do lote (sul → norte).
     const Y = { ss2: -3.72, ss1: -1.12, terreo: 1.48, pav2: 5.16, caixa: 8.31, topo: 11.16 };
     const L = 32.75, W = 17.28;
-    const SW = 2.32; // largura aproximada das vagas normais
-    const CORE = { x: 16.64, z: 0.28, l: 4.00, w: 4.30 };
-    const ELV = { w: 1.70, d: 1.80 }; // caixa externa do elevador (1,50 × 1,60 úteis + paredes)
-    ELV.x = CORE.x + CORE.l - ELV.w / 2;
-    ELV.z = CORE.z + ELV.d / 2;
 
+    // Isolamento por pavimento: camadas escondidas em cada vista (cada vista mostra só o próprio andar)
     const CUT = {
       obra: new Set(),
-      ss2: new Set(['ss1', 'ss1slab', 'terreo', 'terreoTeto', 'pav2', 'pav2Teto', 'caixa', 'fundacao', 'ss2slab']),
-      ss1: new Set(['ss2', 'ss1slab', 'terreo', 'terreoTeto', 'pav2', 'pav2Teto', 'caixa', 'fundacao']),
-      terreo: new Set(['ss2', 'ss1', 'rampa', 'ss2slab', 'ss1slab', 'pav2', 'pav2Teto', 'caixa', 'fundacao', 'terreoTeto']),
-      pav2: new Set(['ss2', 'ss1', 'rampa', 'ss2slab', 'ss1slab', 'caixa', 'pav2Teto', 'fundacao']),
-      rampa: new Set(['pav2', 'pav2Teto', 'caixa', 'fundacao', 'terreoTeto'])
+      ss2: new Set(['ss1', 'ss1slab', 'terreo', 'terreoTeto', 'pav2', 'pav2Teto', 'caixa', 'fundacao', 'ss2slab', 'entorno']),
+      ss1: new Set(['ss2', 'ss1slab', 'terreo', 'terreoTeto', 'pav2', 'pav2Teto', 'caixa', 'fundacao', 'entorno']),
+      terreo: new Set(['ss2', 'ss1', 'rampa', 'ss2slab', 'ss1slab', 'pav2', 'pav2Teto', 'caixa', 'fundacao', 'terreoTeto', 'entorno']),
+      pav2: new Set(['ss2', 'ss1', 'rampa', 'ss2slab', 'ss1slab', 'caixa', 'pav2Teto', 'fundacao', 'entorno']),
+      rampa: new Set(['pav2', 'pav2Teto', 'caixa', 'fundacao', 'terreoTeto', 'entorno'])
     };
     let viewMode = 'obra';
     let camFly = null;
@@ -163,857 +184,183 @@
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.18;
+    renderer.toneMappingExposure = 0.95;
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
     const scene = new THREE.Scene();
-    const skyCol = 0xa9c4d8;
-    scene.background = new THREE.Color(skyCol);
-    scene.fog = new THREE.Fog(0xc2d2de, 130, 300);
-    (function skyDome() {
-      const c = document.createElement('canvas');
-      c.width = 8; c.height = 512;
-      const g = c.getContext('2d');
-      const grd = g.createLinearGradient(0, 0, 0, 512);
-      grd.addColorStop(0, '#5e98c8');
-      grd.addColorStop(0.38, '#9ec4e0');
-      grd.addColorStop(0.55, '#e4e6dc');
-      grd.addColorStop(1, '#c3d0b6');
-      g.fillStyle = grd;
-      g.fillRect(0, 0, 8, 512);
-      const tex = new THREE.CanvasTexture(c);
-      const mesh = new THREE.Mesh(
-        new THREE.SphereGeometry(280, 32, 16),
-        new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide, fog: false, depthWrite: false })
-      );
-      scene.add(mesh);
-    })();
+    scene.background = new THREE.Color(0xb9cfe0);
+    scene.fog = new THREE.Fog(0xc9d6e0, 110, 260);
 
-    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 500);
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.08, 600);
     camera.position.set(-24, 16, 32);
     const controls = new OrbitControls(camera, canvas);
     controls.target.set(14, 1.8, 8);
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.maxPolarAngle = Math.PI * 0.49;
-    controls.minDistance = 6;
+    controls.minDistance = 4;
     controls.maxDistance = 130;
-    controls.autoRotate = false;
-    controls.autoRotateSpeed = 0.45;
 
-    scene.add(new THREE.HemisphereLight(0xe7f0f7, 0x6a5a44, 0.62));
-    const sun = new THREE.DirectionalLight(0xfff1d4, 2.15);
-    sun.position.set(38, 46, 22);
+    // Luz: céu HDRI (Poly Haven, CC0) + sol com sombra suave (mesma direção do render do Blender)
+    const SUN_DIR = new THREE.Vector3(-0.74, 0.59, 0.33).normalize();
+    const hemi = new THREE.HemisphereLight(0xe4eef6, 0x7a6a55, 0.35);
+    scene.add(hemi);
+    const sun = new THREE.DirectionalLight(0xfff0dc, 2.6);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(1536, 1536);
-    sun.shadow.camera.near = 2;
-    sun.shadow.camera.far = 160;
-    sun.shadow.camera.left = sun.shadow.camera.bottom = -55;
-    sun.shadow.camera.right = sun.shadow.camera.top = 55;
-    sun.shadow.bias = -0.00015;
-    sun.shadow.normalBias = 0.035;
-    sun.shadow.radius = 2.2;
-    scene.add(sun);
-    scene.add(sun.target);
-    sun.target.position.set(14, 0, 8);
-    const fill = new THREE.DirectionalLight(0xb7cbe0, 0.42);
-    fill.position.set(-36, 22, -16);
-    scene.add(fill);
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.near = 5;
+    sun.shadow.camera.far = 200;
+    sun.shadow.camera.left = sun.shadow.camera.bottom = -48;
+    sun.shadow.camera.right = sun.shadow.camera.top = 48;
+    sun.shadow.bias = -0.0002;
+    sun.shadow.normalBias = 0.03;
+    sun.shadow.radius = 3;
+    const SUN_TGT = new THREE.Vector3(14, 0, 8);
+    sun.position.copy(SUN_TGT).addScaledVector(SUN_DIR, 90);
+    sun.target.position.copy(SUN_TGT);
+    scene.add(sun, sun.target);
 
-    (function dayEnv() {
-      const s = new THREE.Scene();
-      s.add(new THREE.HemisphereLight(0xeaf2f8, 0x6b5a44, 1.1));
-      const L = new THREE.DirectionalLight(0xfff3d8, 2.2);
-      L.position.set(5, 8, 3);
-      s.add(L);
-      const ground = new THREE.Mesh(
-        new THREE.CircleGeometry(14, 32),
-        new THREE.MeshStandardMaterial({ color: 0x6a7a58, roughness: 1 })
-      );
-      ground.rotation.x = -Math.PI / 2;
-      ground.position.y = -1;
-      s.add(ground);
-      const pmrem = new THREE.PMREMGenerator(renderer);
-      scene.environment = pmrem.fromScene(s, 0.04).texture;
-      pmrem.dispose();
-    })();
-
-
-    const parts = [];
-    function addPart(mesh, appear, opts = {}) {
-      mesh.userData = {
-        appear, until: opts.until, preview: opts.preview || 'ghost',
-        rest: mesh.position.clone(),
-        explode: opts.explode || new THREE.Vector3(0, 0, 0),
-        layer: opts.layer || 'site',
-        onlyView: opts.onlyView || null
-      };
-      if (mesh.castShadow !== false) mesh.castShadow = true;
-      mesh.receiveShadow = true;
-      scene.add(mesh);
-      parts.push(mesh);
-      return mesh;
-    }
-    const grit = (() => {
-      const c = document.createElement('canvas');
-      c.width = c.height = 256;
-      const g = c.getContext('2d');
-      const img = g.createImageData(256, 256);
-      for (let i = 0; i < img.data.length; i += 4) {
-        const n = 160 + Math.random() * 95;
-        img.data[i] = img.data[i+1] = img.data[i+2] = n;
-        img.data[i+3] = 255;
-      }
-      g.putImageData(img, 0, 0);
-      const tex = new THREE.CanvasTexture(c);
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.colorSpace = THREE.NoColorSpace;
-      tex.repeat.set(2.4, 2.4);
-      tex.anisotropy = 8;
-      return tex;
-    })();
-    const grassMap = (() => {
-      const c = document.createElement('canvas');
-      c.width = c.height = 512;
-      const g = c.getContext('2d');
-      const img = g.createImageData(512, 512);
-      for (let i = 0; i < img.data.length; i += 4) {
-        const n = Math.random();
-        img.data[i]   = 70 + n * 50;
-        img.data[i+1] = 92 + n * 70;
-        img.data[i+2] = 48 + n * 36;
-        img.data[i+3] = 255;
-      }
-      g.putImageData(img, 0, 0);
-      const tex = new THREE.CanvasTexture(c);
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.repeat.set(18, 18);
-      tex.anisotropy = 8;
-      return tex;
-    })();
-    const asphaltMap = (() => {
-      const c = document.createElement('canvas');
-      c.width = c.height = 256;
-      const g = c.getContext('2d');
-      g.fillStyle = '#4e545c';
-      g.fillRect(0, 0, 256, 256);
-      const img = g.getImageData(0, 0, 256, 256);
-      for (let i = 0; i < img.data.length; i += 4) {
-        const n = (Math.random() - 0.5) * 28;
-        img.data[i]   = Math.max(0, Math.min(255, img.data[i] + n));
-        img.data[i+1] = Math.max(0, Math.min(255, img.data[i+1] + n));
-        img.data[i+2] = Math.max(0, Math.min(255, img.data[i+2] + n));
-      }
-      g.putImageData(img, 0, 0);
-      g.strokeStyle = 'rgba(232,228,210,0.85)';
-      g.lineWidth = 6;
-      g.setLineDash([28, 22]);
-      g.beginPath(); g.moveTo(128, 8); g.lineTo(128, 248); g.stroke();
-      const tex = new THREE.CanvasTexture(c);
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.repeat.set(1, 6);
-      tex.anisotropy = 8;
-      return tex;
-    })();
-    function mat(color, rough = 0.86, opts = {}) {
-      const metal = opts.metal ?? 0.04;
-      const params = {
-        color, roughness: rough, metalness: metal,
-        envMapIntensity: opts.env ?? (metal > 0.3 ? 1.15 : 0.7),
-        ...opts
-      };
-      delete params.metal;
-      delete params.env;
-      if (params.bumpMap === undefined && metal < 0.35 && !params.map) {
-        params.bumpMap = grit;
-        params.bumpScale = params.bumpScale ?? 0.035;
-      }
-      return new THREE.MeshStandardMaterial(params);
-    }
-    function glassMat(color = 0x8fb8d0, opacity = 0.48) {
-      return new THREE.MeshStandardMaterial({
-        color, roughness: 0.08, metalness: 0.12,
-        transparent: true, opacity, depthWrite: false,
-        envMapIntensity: 1.2
-      });
-    }
-    function box(w, h, d, color, x, y, z, mopts) {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), typeof color === 'number' ? mat(color, 0.86, mopts) : color);
-      mesh.position.set(x, y, z);
-      return mesh;
-    }
-    function cyl(r, h, color, x, y, z, seg = 12) {
-      const mesh = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, seg), mat(color, 0.8));
-      mesh.position.set(x, y, z);
-      return mesh;
-    }
-    function ringPlate(outerW, outerD, innerW, innerD, thick, color) {
-      const shape = new THREE.Shape();
-      const ow = outerW/2, od = outerD/2;
-      shape.moveTo(-ow,-od); shape.lineTo(ow,-od); shape.lineTo(ow,od); shape.lineTo(-ow,od); shape.closePath();
-      const hole = new THREE.Path();
-      const iw = innerW/2, id = innerD/2;
-      hole.moveTo(-iw,-id); hole.lineTo(-iw,id); hole.lineTo(iw,id); hole.lineTo(iw,-id); hole.closePath();
-      shape.holes.push(hole);
-      const geo = new THREE.ExtrudeGeometry(shape, { depth: thick, bevelEnabled: false });
-      geo.rotateX(-Math.PI/2);
-      return new THREE.Mesh(geo, typeof color === 'number' ? mat(color, 0.95) : color);
+    // Pós-processamento: oclusão de ambiente (GTAO) para cantos e encontros mais realistas
+    let composer = null, gtao = null;
+    function setupComposer() {
+      if (!USE_AO) return;
+      try {
+        composer = new EffectComposer(renderer);
+        composer.addPass(new RenderPass(scene, camera));
+        gtao = new GTAOPass(scene, camera, innerWidth, innerHeight);
+        gtao.output = GTAOPass.OUTPUT.Default;
+        gtao.blendIntensity = 0.85;
+        gtao.updateGtaoMaterial({ radius: 0.6, distanceExponent: 1.5, thickness: 1.5, scale: 1.0, samples: 12 });
+        gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 6, rings: 2, samples: 12 });
+        composer.addPass(gtao);
+        composer.addPass(new OutputPass());
+      } catch (e) { console.warn('AO desligado', e); composer = null; }
     }
 
-    const texCache = new Map();
-    function stallTex(num, kind) {
-      const key = `${num}|${kind}`;
-      if (texCache.has(key)) return texCache.get(key);
+    // ---- rótulos (sprites) a partir dos marcadores do GLB
+    function labelSprite(text, color, lineH) {
+      const lines = String(text).split('\n');
+      const dark = color === '#1a2228';
+      const fs = 50, lh = 62, pad = 26;
       const c = document.createElement('canvas');
-      c.width = 256; c.height = 512;
+      const g0 = c.getContext('2d');
+      g0.font = `700 ${fs}px Segoe UI, system-ui, sans-serif`;
+      const tw = Math.max(...lines.map(l => g0.measureText(l).width));
+      c.width = Math.ceil(tw + pad * 2); c.height = lh * lines.length + pad;
       const g = c.getContext('2d');
-      const bg = kind === 'PCD' ? '#1e4a72' : kind === 'IDOSO' ? '#6a5420' : kind === 'MOTO' ? '#3a3a36' : '#3e444b';
-      const ln = kind === 'PCD' ? '#8fd0ff' : kind === 'IDOSO' ? '#f0d48a' : '#e8edf2';
-      g.fillStyle = bg;
-      g.fillRect(0, 0, 256, 512);
-      g.strokeStyle = ln;
-      g.lineWidth = 14;
-      g.strokeRect(10, 10, 236, 492);
-      g.fillStyle = '#ffffff';
-      g.textAlign = 'center';
-      if (kind === 'MOTO') {
-        g.font = 'bold 64px Segoe UI, sans-serif';
-        g.fillText(String(num), 128, 200);
-        g.font = 'bold 36px Segoe UI, sans-serif';
-        g.fillText('MOTO', 128, 270);
-      } else {
-        if (num) { g.font = 'bold 110px Segoe UI, sans-serif'; g.fillText(String(num), 128, 200); }
-        g.font = 'bold 40px Segoe UI, sans-serif';
-        g.fillText(kind === 'NORMAL' ? 'NORMAL' : kind, 128, num ? 280 : 200);
-        if (kind === 'PCD') {
-          g.beginPath();
-          g.arc(128, 390, 42, 0, Math.PI * 2);
-          g.lineWidth = 8;
-          g.strokeStyle = '#8fd0ff';
-          g.stroke();
-          g.font = 'bold 48px Segoe UI, sans-serif';
-          g.fillStyle = '#8fd0ff';
-          g.fillText('P', 128, 408);
-        }
-      }
-      const tex = new THREE.CanvasTexture(c);
-      tex.anisotropy = 8;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      texCache.set(key, tex);
-      return tex;
-    }
-    function hatchTex() {
-      if (texCache.has('hatch')) return texCache.get('hatch');
-      const c = document.createElement('canvas');
-      c.width = 128; c.height = 256;
-      const g = c.getContext('2d');
-      g.fillStyle = '#1e4a72';
-      g.fillRect(0, 0, 128, 256);
-      g.strokeStyle = '#8fd0ff';
-      g.lineWidth = 6;
-      for (let i = -256; i < 256; i += 22) {
-        g.beginPath(); g.moveTo(i, 256); g.lineTo(i + 256, 0); g.stroke();
-      }
-      const tex = new THREE.CanvasTexture(c);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      texCache.set('hatch', tex);
-      return tex;
-    }
-    function labelSprite(text, color = '#f2f6fa', scaleX = 3.4, scaleY = 0.7) {
-      const c = document.createElement('canvas');
-      c.width = 640; c.height = 128;
-      const g = c.getContext('2d');
-      g.fillStyle = 'rgba(12,18,24,0.86)';
-      g.beginPath();
-      g.roundRect(8, 8, 624, 112, 18);
-      g.fill();
-      g.strokeStyle = color;
-      g.lineWidth = 4;
-      g.stroke();
+      g.fillStyle = dark ? 'rgba(248,246,240,0.93)' : 'rgba(12,18,24,0.86)';
+      g.beginPath(); g.roundRect(4, 4, c.width - 8, c.height - 8, 16); g.fill();
+      g.strokeStyle = dark ? 'rgba(40,60,80,0.55)' : color; g.lineWidth = 4; g.stroke();
       g.fillStyle = color;
-      g.font = 'bold 54px Segoe UI, sans-serif';
-      g.textAlign = 'center';
-      g.textBaseline = 'middle';
-      g.fillText(text, 320, 66);
-      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthTest: true }));
-      spr.scale.set(scaleX, scaleY, 1);
-      spr.castShadow = false;
+      g.font = `700 ${fs}px Segoe UI, system-ui, sans-serif`;
+      g.textAlign = 'center'; g.textBaseline = 'middle';
+      lines.forEach((l, i) => g.fillText(l, c.width / 2, pad / 2 + lh * (i + 0.5)));
+      const tex = new THREE.CanvasTexture(c);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.anisotropy = 4;
+      const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false, fog: false, toneMapped: false }));
+      const k = lineH / lh;
+      spr.scale.set(c.width * k, c.height * k, 1);
+      spr.renderOrder = 10;
+      spr.layers.set(1); // desenhado por cima, fora do AO
       return spr;
     }
 
-    function stall(x, z, l, w, appear, lift, layer, yFloor, num, kind = 'NORMAL', rot = 0) {
-      const tex = stallTex(num, kind);
-      const m = new THREE.MeshBasicMaterial({ map: tex });
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(l - 0.1, 0.04, w - 0.1), m);
-      mesh.position.set(x, yFloor + 0.28, z);
-      mesh.rotation.y = rot;
-      addPart(mesh, appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-    }
-    function aisle(x, z, l, w, appear, lift, layer, yFloor) {
-      const m = new THREE.MeshStandardMaterial({ map: hatchTex(), roughness: 0.7, metalness: 0.02 });
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(l - 0.08, 0.025, w - 0.08), m);
-      mesh.position.set(x, yFloor + 0.21, z);
-      addPart(mesh, appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-    }
+    // ---- carga do modelo
+    const parts = [];
+    const loadBar = document.getElementById('loadBar');
+    const loadTxt = document.getElementById('loadTxt');
+    const manager = new THREE.LoadingManager();
+    const draco = new DRACOLoader(manager).setDecoderPath(DRACO_URL);
+    const gltfLoader = new GLTFLoader(manager).setDRACOLoader(draco);
+    let envMap = null;
+    const t0Load = performance.now();
 
-    // --- Terreno, rua e jardim ---
-    const pitCX = L/2, pitCZ = W/2;
-    const pitW = L + 2.2, pitD = W + 2.2;
-    // Rampa interna: 13,65 m sobre as motos, liga SS2 (leste, baixo) ao SS1 (oeste, alto)
-    const rampLen = 13.65, rampX0 = 14.50, rampX1 = rampX0 + rampLen;
-    const rampWd = 6.8, rampZc = W - rampWd/2;
-    // Acesso da rua: portão no corredor do SS1, face oeste
-    const gateZ = 8.7, gateWd = 5.0;
-    const groundMat = mat(0xffffff, 0.95, { map: grassMap, env: 0.35, bumpMap: grassMap, bumpScale: 0.08 });
-    const gShape = new THREE.Shape();
-    const ow = 85, od = 85;
-    gShape.moveTo(-ow,-od); gShape.lineTo(ow,-od); gShape.lineTo(ow,od); gShape.lineTo(-ow,od); gShape.closePath();
-    const hole = new THREE.Path();
-    // L: cova da obra + canal do acesso oeste até a rua
-    const hx0 = -pitW/2, hx1 = pitW/2, hz0 = -pitD/2, hz1 = pitD/2;
-    const chx0 = -pitCX - 12, chx1 = -pitCX + 2.5;
-    const chz0 = gateZ - gateWd/2 - pitCZ, chz1 = gateZ + gateWd/2 - pitCZ;
-    hole.moveTo(hx0, hz0);
-    hole.lineTo(hx0, chz0);
-    hole.lineTo(chx0, chz0);
-    hole.lineTo(chx0, chz1);
-    hole.lineTo(hx0, chz1);
-    hole.lineTo(hx0, hz1);
-    hole.lineTo(hx1, hz1);
-    hole.lineTo(hx1, hz0);
-    hole.closePath();
-    gShape.holes.push(hole);
-    const gGeo = new THREE.ExtrudeGeometry(gShape, { depth: 0.12, bevelEnabled: false });
-    gGeo.rotateX(-Math.PI/2);
-    const ground = new THREE.Mesh(gGeo, groundMat);
-    ground.position.set(pitCX, 0, pitCZ);
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    const street = box(8, 0.08, 28, mat(0xffffff, 0.92, { map: asphaltMap, env: 0.3, bumpScale: 0.02 }), -14.2, 0.06, pitCZ);
-    street.receiveShadow = true;
-    scene.add(street);
-    scene.add(box(0.35, 0.16, 28, mat(0x9aa0a6, 0.7, { metal: 0.15 }), -10.15, 0.12, pitCZ));
-    const ruaLbl = labelSprite('RUA DESEMBARGADOR VIEIRA CAVALCANTI', '#c5d0da', 10, 0.55);
-    ruaLbl.position.set(-14.2, 1.2, pitCZ);
-    scene.add(ruaLbl);
-
-    addPart(box(10.2, 0.22, 5.4, 0x5a6a4e, -5.1, 0.12, 3.2), 0, { preview: 'hide', layer: 'site' });
-    addPart(box(10.2, 0.22, 4.6, 0x5a6a4e, -5.1, 0.12, 13.6), 0, { preview: 'hide', layer: 'site' });
-    addPart(box(4.2, 0.22, 22, 0x5a6a4e, L + 2.0, 0.12, pitCZ), 0, { preview: 'hide', layer: 'site' });
-    addPart(box(L+2, 0.22, 2.0, 0x5a6a4e, pitCX, 0.12, -1.15), 0, { preview: 'hide', layer: 'site' });
-    addPart(box(L+2, 0.22, 2.0, 0x5a6a4e, pitCX, 0.12, W+1.15), 0, { preview: 'hide', layer: 'site' });
-
-    addPart(box(6.0, 0.35, 4.4, 0x4e6a45, -5.6, 0.28, 3.0), 0, { preview: 'hide', layer: 'site' });
-    function tree(x, z, h, r) {
-      addPart(cyl(0.18 + r*0.08, h, 0x5a4030, x, h/2, z, 8), 0, { preview: 'hide', layer: 'site' });
-      const foliage = new THREE.Mesh(
-        new THREE.IcosahedronGeometry(r, 1),
-        mat(0x4a6e44, 0.9, { env: 0.35, bumpScale: 0.08 })
-      );
-      foliage.position.set(x, h + r*0.35, z);
-      foliage.scale.set(1, 0.85, 1);
-      addPart(foliage, 0, { preview: 'hide', layer: 'site' });
-    }
-    tree(-6.8, 2.2, 2.6, 1.35);
-    tree(-7.6, 4.2, 2.0, 0.95);
-    tree(-6.4, 14.6, 2.3, 1.05);
-
-    addPart(box(pitW-0.2, 3.9, pitD-0.2, 0x5a6a4e, pitCX, -1.9, pitCZ), 0, { until: A.escava1, preview: 'hide', layer: 'site' });
-    addPart(box(pitW-0.2, 0.2, pitD-0.2, 0x2b241c, pitCX, Y.ss2 - 0.35, pitCZ), A.escava1, { preview: 'hide', layer: 'site' });
-    addPart(box(L-0.4, 0.5, W-0.4, 0x6b6458, pitCX, Y.ss2 - 0.15, pitCZ), A.rachao, { explode: new THREE.Vector3(0, 6, 0), layer: 'site' });
-
-    const wallC = 0x8d8a84;
-    function curtain(appear, yTop, yBot, lift) {
-      const h = yTop - yBot, y = (yTop + yBot) / 2;
-      const ex = new THREE.Vector3(0, lift, 0);
-      const x0 = -0.9, x1 = L+0.9, z0 = -0.9, z1 = W+0.9;
-      addPart(box(x1-x0, h, 0.55, wallC, (x0+x1)/2, y, z0), appear, { explode: ex, layer: 'site' });
-      addPart(box(x1-x0, h, 0.55, wallC, (x0+x1)/2, y, z1), appear, { explode: ex, layer: 'site' });
-      // parede oeste com vão do portão (acesso da rua no corredor do SS1)
-      const gap0 = gateZ - gateWd/2 - 0.1, gap1 = gateZ + gateWd/2 + 0.1;
-      addPart(box(0.55, h, Math.max(0.4, gap0 - z0), wallC, x0, y, (z0+gap0)/2), appear, { explode: ex, layer: 'site' });
-      addPart(box(0.55, h, Math.max(0.4, z1 - gap1), wallC, x0, y, (gap1+z1)/2), appear, { explode: ex, layer: 'site' });
-      addPart(box(0.55, h, z1-z0-0.55, wallC, x1, y, (z0+z1)/2), appear, { explode: ex, layer: 'site' });
-      for (let i = 0; i < 14; i++) {
-        const x = 0.4 + i * (L / 13);
-        addPart(cyl(0.22, h, 0x7c786f, x, y, z0, 8), appear, { explode: ex, layer: 'site' });
-        addPart(cyl(0.22, h, 0x7c786f, x, y, z1, 8), appear, { explode: ex, layer: 'site' });
+    function prepMaterial(m) {
+      const n = m.name || '';
+      if (m.map) { m.map.anisotropy = 8; }
+      if (m.normalMap) m.normalMap.anisotropy = 4;
+      m.envMapIntensity = 0.85;
+      if (n.startsWith('vidro_guarda')) {
+        Object.assign(m, { transparent: true, opacity: 0.22, roughness: 0.04, metalness: 0.15, depthWrite: false, envMapIntensity: 1.6 });
+      } else if (n.startsWith('vidro_escuro')) {
+        Object.assign(m, { roughness: 0.06, metalness: 0.4, envMapIntensity: 1.5 });
+      } else if (n.startsWith('vidro')) {
+        Object.assign(m, { transparent: true, opacity: 0.42, roughness: 0.03, metalness: 0.2, depthWrite: false, envMapIntensity: 1.8 });
+      } else if (n.startsWith('luminaria')) {
+        m.emissiveIntensity = 2.0;
+      } else if (/inox|aluminio|metal|acm_grafite|carro/.test(n)) {
+        m.envMapIntensity = 1.3;
       }
+      m.side = THREE.FrontSide;
     }
-    curtain(A.faseA, 0.25, -1.6, 10);
-    curtain(A.faseB1, -1.6, -2.9, 14);
-    curtain(A.faseC, -2.9, Y.ss2 - 0.3, 18);
 
-    function tiebacks(appear, y, lift, out) {
-      for (let i = 0; i < 9; i++) {
-        const x = 2 + i * 3.5;
-        addPart(box(0.14, 0.14, 6.5, 0x3a4550, x, y, W + 3.6), appear, { explode: new THREE.Vector3(0, lift, out), layer: 'site' });
-        addPart(box(0.14, 0.14, 6.5, 0x3a4550, x, y, -3.6), appear, { explode: new THREE.Vector3(0, lift, -out), layer: 'site' });
+    function registerPart(obj) {
+      const u = obj.userData;
+      const meshes = [];
+      obj.traverse(o => { if (o.isMesh) meshes.push(o); });
+      const mats = [];
+      for (const me of meshes) {
+        me.material = Array.isArray(me.material) ? me.material.map(x => x.clone()) : me.material.clone();
+        const arr = Array.isArray(me.material) ? me.material : [me.material];
+        for (const m of arr) {
+          prepMaterial(m);
+          mats.push({ m, op: m.opacity, tr: m.transparent, dw: m.depthWrite, em: m.emissive ? m.emissive.clone() : null });
+        }
+        const glass = arr.every(m => (m.name || '').startsWith('vidro') && m.transparent);
+        me.castShadow = !glass && !['luminaria'].some(s => arr[0].name.startsWith(s));
+        me.receiveShadow = true;
       }
-    }
-    tiebacks(A.faseB1, -1.1, 12, 4);
-    tiebacks(A.faseB2, -2.4, 16, 6);
-    tiebacks(A.faseC, -3.4, 20, 8);
-
-    for (let i = 0; i < 5; i++) for (let j = 0; j < 3; j++) {
-      const x = 3 + i * 6.5, z = 2.5 + j * 6;
-      if (x > CORE.x-1 && x < CORE.x+CORE.l+1 && z < CORE.w) continue;
-      addPart(cyl(0.32, 2.0, 0x6b6258, x, Y.ss2 + 0.4, z, 8), A.fund, { explode: new THREE.Vector3(0, 20, 0), layer: 'fundacao' });
-      addPart(box(1.2, 0.55, 1.2, 0x746e64, x, Y.ss2 + 1.15, z), A.blocos, { explode: new THREE.Vector3(0, 22, 0), layer: 'fundacao' });
-    }
-    addPart(box(L-1.2, 0.45, W-1.2, 0x7a746a, pitCX, Y.ss2 + 1.2, pitCZ), A.blocos, { explode: new THREE.Vector3(0, 22, 0), layer: 'fundacao' });
-
-    function slab(l, w, thick, color, x, y, z, appear, lift, layer) {
-      addPart(box(l, thick, w, color, x, y, z), appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-    }
-    function wall(l, h, t, color, x, y, z, appear, lift, layer) {
-      addPart(box(l, h, t, color, x, y, z), appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-    }
-    function windows(len, count, x0, y, z, alongX, appear, lift, layer) {
-      const span = len / count;
-      const glass = glassMat(0x7fa9c4, 0.52);
-      const frame = mat(0x2c333b, 0.35, { metal: 0.7, env: 1.1 });
-      for (let i = 0; i < count; i++) {
-        const cx = alongX ? x0 + (i + 0.5) * span : x0;
-        const cz = alongX ? z : z + (i + 0.5) * span;
-        const ww = alongX ? 1.55 : 0.08, d = alongX ? 0.08 : 1.55;
-        const fw = alongX ? 1.68 : 0.14, fd = alongX ? 0.14 : 1.68;
-        addPart(box(fw, 1.68, fd, frame, cx, y, cz), appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-        addPart(box(ww, 1.48, d, glass, cx, y, cz + (alongX ? 0.03 : 0)), appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-      }
+      obj.userData = {
+        ...u, rest: obj.position.clone(),
+        explode: new THREE.Vector3(u.ex || 0, u.ey || 0, u.ez || 0),
+        appear: A[u.ap] ?? 0, until: u.until ? A[u.until] : null,
+        only: u.only ? u.only.split(',') : null,
+        isLabel: u.kind === 'label', meshes, mats, ghost: null
+      };
+      parts.push(obj);
     }
 
-    function roomTex(name, fill, ink) {
-      const key = 'room|' + name + '|' + fill;
-      if (texCache.has(key)) return texCache.get(key);
-      const c = document.createElement('canvas');
-      c.width = 512; c.height = 512;
-      const g = c.getContext('2d');
-      g.fillStyle = fill;
-      g.fillRect(0, 0, 512, 512);
-      g.strokeStyle = 'rgba(40,50,60,0.22)';
-      g.lineWidth = 8;
-      g.strokeRect(8, 8, 496, 496);
-      g.fillStyle = ink;
-      g.textAlign = 'center';
-      g.textBaseline = 'middle';
-      const lines = name.split('\n');
-      let fs = lines.length > 2 ? 48 : 62;
-      g.font = '700 ' + fs + 'px Segoe UI, sans-serif';
-      while (fs > 26 && lines.some(ln => g.measureText(ln).width > 460)) {
-        fs -= 2;
-        g.font = '700 ' + fs + 'px Segoe UI, sans-serif';
-      }
-      lines.forEach((ln, i) => g.fillText(ln, 256, 256 + (i - (lines.length-1)/2) * (fs + 10)));
-      const tex = new THREE.CanvasTexture(c);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.anisotropy = 8;
-      texCache.set(key, tex);
-      return tex;
+    function loadSky() {
+      return new Promise((res) => {
+        new RGBELoader(manager).load(SKY_URL, (hdr) => {
+          hdr.mapping = THREE.EquirectangularReflectionMapping;
+          const pm = new THREE.PMREMGenerator(renderer);
+          envMap = pm.fromEquirectangular(hdr).texture;
+          scene.environment = envMap;
+          scene.background = hdr;
+          scene.backgroundIntensity = 0.9;
+          pm.dispose();
+          res();
+        }, undefined, () => res());
+      });
     }
-    function roomFloor(x, z, l, w, name, appear, lift, layer, yFloor, fill = '#e8e0d0') {
-      const m = new THREE.MeshBasicMaterial({ map: roomTex(name, fill, '#1a2228') });
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.4, l-0.08), 0.03, Math.max(0.4, w-0.08)), m);
-      mesh.position.set(x, yFloor + 0.2, z);
-      addPart(mesh, appear, { explode: new THREE.Vector3(0, lift, 0), layer, onlyView: layer === 'pav2' ? 'pav2' : 'terreo' });
-    }
-    function iw(lx, lz, alongX, len, appear, lift, layer, y0, h, color = 0xcfc8bc) {
-      const tck = 0.12;
-      const cx = alongX ? lx + len/2 : lx;
-      const cz = alongX ? lz : lz + len/2;
-      addPart(box(alongX ? len : tck, h, alongX ? tck : len, color, cx, y0 + h/2, cz), appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-    }
-    function rampTex() {
-      if (texCache.has('ramp')) return texCache.get('ramp');
-      const c = document.createElement('canvas');
-      c.width = 64; c.height = 512;
-      const g = c.getContext('2d');
-      g.fillStyle = '#6a6e74';
-      g.fillRect(0, 0, 64, 512);
-      g.fillStyle = '#e6c44a';
-      for (let i = 0; i < 18; i++) {
-        g.beginPath();
-        const y = 12 + i * 28;
-        g.moveTo(32, y);
-        g.lineTo(8, y + 18);
-        g.lineTo(24, y + 18);
-        g.lineTo(32, y + 8);
-        g.lineTo(40, y + 18);
-        g.lineTo(56, y + 18);
-        g.closePath();
-        g.fill();
-      }
-      const tex = new THREE.CanvasTexture(c);
-      tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(1, 4);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      texCache.set('ramp', tex);
-      return tex;
-    }
-    function rampRun(x0, y0, x1, y1, z, w, appear, lift, layer) {
-      const dx = x1 - x0, dy = y1 - y0;
-      const len = Math.hypot(dx, dy);
-      const ang = Math.atan2(dy, dx);
-      const mesh = box(len, 0.28, w, mat(0xffffff, 0.9, { map: rampTex(), env: 0.25 }), (x0+x1)/2, (y0+y1)/2, z);
-      mesh.rotation.z = ang;
-      addPart(mesh, appear, { explode: new THREE.Vector3(-8, lift, 4), layer });
-      const railMat = mat(0x3a4550, 0.4, { metal: 0.5 });
-      for (const side of [-w/2 + 0.06, w/2 - 0.06]) {
-        const rail = box(len, 0.9, 0.1, railMat, (x0+x1)/2, (y0+y1)/2 + 0.55, z + side);
-        rail.rotation.z = ang;
-        addPart(rail, appear, { explode: new THREE.Vector3(-8, lift, 4), layer });
-      }
-    }
-    function wallGapWest(h, color, x, y, appear, lift, layer) {
-      const gap0 = gateZ - gateWd/2, gap1 = gateZ + gateWd/2;
-      wall(0.28, h, Math.max(0.4, gap0), color, x, y, gap0/2, appear, lift, layer);
-      wall(0.28, h, Math.max(0.4, W - gap1), color, x, y, (gap1+W)/2, appear, lift, layer);
-    }
-    // Laje do SS1: furo só no retângulo da rampa interna (sobre as motos)
-    function slabOpenRamp(l, thick, color, y, appear, lift, layer) {
-      const zCut = rampZc - rampWd/2 - 0.12;
-      slab(l, Math.max(1, zCut), thick, color, l/2, y, zCut/2, appear, lift, layer);
-      if (rampX0 > 0.6) slab(rampX0, rampWd + 0.4, thick, color, rampX0/2, y, rampZc, appear, lift, layer);
-      if (l - rampX1 > 0.6) slab(l - rampX1, rampWd + 0.4, thick, color, (rampX1+l)/2, y, rampZc, appear, lift, layer);
-    }
-    // Laje do térreo: furo só no portão oeste (acesso da rua ao SS1)
-    function slabOpenGate(l, thick, color, y, appear, lift, layer) {
-      const z0 = gateZ - gateWd/2 - 0.15, z1 = gateZ + gateWd/2 + 0.15;
-      slab(l, Math.max(1, z0), thick, color, l/2, y, z0/2, appear, lift, layer);
-      slab(l, Math.max(1, W - z1), thick, color, l/2, y, (z1+W)/2, appear, lift, layer);
-      slab(Math.max(1, l - 3.2), gateWd + 0.4, thick, color, (3.2+l)/2, y, gateZ, appear, lift, layer);
+    function loadModel() {
+      return new Promise((res, rej) => {
+        gltfLoader.load(MODEL_URL, (gltf) => {
+          const root = gltf.scene;
+          scene.add(root);
+          const toReg = [];
+          root.traverse(o => { if (o.userData && o.userData.layer) toReg.push(o); });
+          for (const o of toReg) {
+            if (o.userData.kind === 'label') {
+              const s = labelSprite(o.userData.label, o.userData.color || '#e8edf2', (o.userData.color === '#1a2228') ? 0.42 : Math.min(0.5, o.userData.sy || 0.5));
+              o.add(s);
+            }
+            registerPart(o);
+          }
+          res(gltf);
+        }, (ev) => {
+          if (ev.total) {
+            const p = ev.loaded / ev.total;
+            loadBar.style.width = (p * 100).toFixed(0) + '%';
+            loadTxt.textContent = `Carregando modelo 3D… ${(p * 100).toFixed(0)}%`;
+          }
+        }, rej);
+      });
     }
 
-    // Núcleo: paredes + escada + poço do elevador (vidro na face sul, porta a norte)
-    function buildCore(y0, h, appear, lift, layer, wallColor, showCabin) {
-      const ex = new THREE.Vector3(0, lift, 0);
-      const cx = CORE.x + CORE.l/2, cz = CORE.z + CORE.w/2;
-      wall(CORE.l, h, 0.22, wallColor, cx, y0 + h/2, CORE.z + CORE.w - 0.11, appear, lift, layer);
-      wall(0.22, h, CORE.w, wallColor, CORE.x + 0.11, y0 + h/2, cz, appear, lift, layer);
-      wall(0.22, h, CORE.w, wallColor, CORE.x + CORE.l - 0.11, y0 + h/2, cz, appear, lift, layer);
-      // face sul: faixa de alvenaria + faixa de vidro no elevador
-      wall(CORE.l - ELV.w, h, 0.22, wallColor, CORE.x + (CORE.l - ELV.w)/2, y0 + h/2, CORE.z + 0.11, appear, lift, layer);
-      const glass = glassMat(0x8fd0ff, 0.46);
-      const shaft = box(ELV.w - 0.12, h - 0.1, 0.08, glass, ELV.x, y0 + h/2, CORE.z + 0.04);
-      addPart(shaft, appear, { explode: ex, layer });
-      // moldura metálica
-      addPart(box(ELV.w, 0.08, 0.1, mat(0x2a333c, 0.35, { metal: 0.7 }), ELV.x, y0 + 0.08, CORE.z + 0.05), appear, { explode: ex, layer });
-      addPart(box(ELV.w, 0.08, 0.1, mat(0x2a333c, 0.35, { metal: 0.7 }), ELV.x, y0 + h - 0.08, CORE.z + 0.05), appear, { explode: ex, layer });
-      // cabine
-      if (showCabin) {
-        const cabin = box(1.28, 2.15, 1.36, mat(0xb8c4ce, 0.25, { metal: 0.45 }), ELV.x, y0 + 1.15, ELV.z);
-        addPart(cabin, appear, { explode: ex, layer });
-        addPart(box(1.1, 1.7, 0.06, glassMat(0x8fd0ff, 0.55), ELV.x, y0 + 1.2, ELV.z + 0.7), appear, { explode: ex, layer });
-      }
-      // portas do elevador (face norte da caixa, para o corredor)
-      addPart(box(0.62, 2.05, 0.08, mat(0x3a4550, 0.4, { metal: 0.55 }), ELV.x - 0.33, y0 + 1.1, ELV.z + ELV.d/2 - 0.02), appear, { explode: ex, layer });
-      addPart(box(0.62, 2.05, 0.08, mat(0x3a4550, 0.4, { metal: 0.55 }), ELV.x + 0.33, y0 + 1.1, ELV.z + ELV.d/2 - 0.02), appear, { explode: ex, layer });
-      // escada: dois lances + patamar
-      const sx0 = CORE.x + 0.28;
-      const stairW = CORE.l - ELV.w - 0.35;
-      const steps = 8, stepH = 0.16, stepD = 0.28;
-      for (let i = 0; i < steps; i++) {
-        addPart(box(stairW * 0.46, stepH, stepD, 0xb7b1a6, sx0 + stairW * 0.25, y0 + 0.1 + i * stepH, CORE.z + 0.55 + i * stepD), appear, { explode: ex, layer });
-      }
-      const landY = y0 + 0.1 + steps * stepH;
-      const landZ = CORE.z + 0.55 + steps * stepD + 0.35;
-      addPart(box(stairW, 0.12, 0.7, 0xb7b1a6, sx0 + stairW/2, landY, landZ), appear, { explode: ex, layer });
-      for (let i = 0; i < steps; i++) {
-        addPart(box(stairW * 0.46, stepH, stepD, 0xb7b1a6, sx0 + stairW * 0.75, landY + i * stepH, landZ - 0.35 - i * stepD), appear, { explode: ex, layer });
-      }
-      // corrimão
-      addPart(box(0.04, 0.9, stairW, mat(0x8a9098, 0.4, { metal: 0.5 }), sx0 + stairW/2, y0 + 1.15, CORE.z + CORE.w/2 - 0.2), appear, { explode: ex, layer });
-    }
-    function coreLabels(y, appear, lift, layer, floorName) {
-      const s1 = labelSprite('ELEVADOR', '#8fd0ff', 2.6, 0.55);
-      s1.position.set(ELV.x, y + 2.45, ELV.z + 1.15);
-      addPart(s1, appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-      const s2 = labelSprite('ESCADA', '#e8edf2', 2.1, 0.5);
-      s2.position.set(CORE.x + 1.15, y + 2.35, CORE.z + 2.4);
-      addPart(s2, appear, { explode: new THREE.Vector3(0, lift, 0), layer });
-      if (floorName) {
-        const s3 = labelSprite(floorName, '#c5d0da', 2.8, 0.52);
-        s3.position.set(10.5, y + 2.6, W/2);
-        addPart(s3, appear, { explode: new THREE.Vector3(0, lift, 0), layer, onlyView: layer });
-      }
-    }
-
-    // --- Subsolo 2 ---
-    const hSS = 2.55;
-    const ySS2 = Y.ss2 + 0.2;
-    slab(L, W, 0.35, 0x3f4348, pitCX, ySS2, pitCZ, A.ss2, 26, 'ss2');
-    slabOpenRamp(L, 0.3, 0x8a8580, Y.ss1 - 0.05, A.ss2, 26, 'ss2slab');
-    wall(L, hSS, 0.28, 0x9a958c, pitCX, ySS2 + hSS/2, 0.14, A.ss2, 26, 'ss2');
-    wall(0.28, hSS, W, 0x9a958c, 0.14, ySS2 + hSS/2, pitCZ, A.ss2, 26, 'ss2');
-    wall(0.28, hSS, W, 0x9a958c, L-0.14, ySS2 + hSS/2, pitCZ, A.ss2, 26, 'ss2');
-    wall(L, hSS, 0.28, 0x9a958c, pitCX, ySS2 + hSS/2, W-0.14, A.ss2, 26, 'ss2');
-
-    const sulZ = 2.70, stallLen = 5.0;
-    // fileira sul SS2: 11 a 5, núcleo, IDOSO, 4 a 1
-    for (let i = 0; i < 7; i++) {
-      const n = 11 - i;
-      stall(0.40 + SW/2 + i*SW, sulZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, n, 'NORMAL');
-    }
-    stall(CORE.x + CORE.l + 1.20, sulZ, 2.40, stallLen, A.ss2, 26, 'ss2', ySS2, null, 'IDOSO');
-    for (let i = 0; i < 4; i++) {
-      const n = 4 - i;
-      stall(CORE.x + CORE.l + 2.40 + SW/2 + i*SW, sulZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, n, 'NORMAL');
-    }
-    // fileira norte SS2: PCD 12 + faixa, 13, 14, 12 motos, 15, 16
-    const nZ = W - 2.70;
-    stall(0.50 + 1.25, nZ, 2.50, stallLen, A.ss2, 26, 'ss2', ySS2, 12, 'PCD');
-    aisle(0.50 + 2.50 + 0.60, nZ, 1.20, stallLen, A.ss2, 26, 'ss2', ySS2);
-    stall(0.50 + 2.50 + 1.20 + SW/2, nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 13, 'NORMAL');
-    stall(0.50 + 2.50 + 1.20 + SW + SW/2, nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 14, 'NORMAL');
-    const motoStep = rampLen / 12;
-    for (let i = 0; i < 12; i++) {
-      stall(rampX0 + i*motoStep + motoStep/2, rampZc - rampWd/2 + 1.15, 1.08, 2.20, A.ss2, 26, 'ss2', ySS2, i + 1, 'MOTO');
-    }
-    stall(Math.min(L - 0.40 - SW - SW/2, rampX1 + 0.4 + SW/2), nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 15, 'NORMAL');
-    stall(L - 0.40 - SW/2, nZ, SW, stallLen, A.ss2, 26, 'ss2', ySS2, 16, 'NORMAL');
-
-    const cols = [2.0, 7.4, 12.8, 23.6, 29.2];
-    for (const x of cols) for (const z of [0.45, W-0.45]) {
-      addPart(cyl(0.28, hSS, 0x6e6a63, x, ySS2 + hSS/2, z, 8), A.ss2, { explode: new THREE.Vector3(0, 26, 0), layer: 'ss2' });
-    }
-
-    buildCore(ySS2, hSS, A.ss2, 26, 'ss2', 0x8d887e, true);
-    coreLabels(ySS2, A.ss2, 26, 'ss2', 'SUBSOLO 2');
-
-    // Rampa interna: só sobre as motos, do SS2 (leste, baixo) ao SS1 (oeste, alto)
-    const yRampSS2 = Y.ss2 + 0.38, yRampSS1 = Y.ss1 + 0.38;
-    rampRun(rampX1, yRampSS2, rampX0, yRampSS1, rampZc, rampWd - 0.45, A.ss2, 18, 'rampa');
-    const desce2 = labelSprite('DESCE  →  SUBSOLO 2', '#e8edf2', 3.6, 0.5);
-    desce2.position.set(rampX1 - 2.2, yRampSS2 + 1.35, rampZc);
-    addPart(desce2, A.ss2, { explode: new THREE.Vector3(-8, 18, 4), layer: 'rampa' });
-    const sobe1 = labelSprite('SOBE  →  SUBSOLO 1', '#e8edf2', 3.4, 0.5);
-    sobe1.position.set(rampX0 + 2.4, yRampSS1 + 1.35, rampZc);
-    addPart(sobe1, A.ss2, { explode: new THREE.Vector3(-8, 18, 4), layer: 'rampa' });
-
-    // --- Subsolo 1 ---
-    const ySS1 = Y.ss1 + 0.15;
-    const hSS1 = 2.45;
-    slabOpenGate(L, 0.3, 0x8a8580, Y.terreo - 0.08, A.ss1, 32, 'ss1slab');
-    const zSS1 = rampZc - rampWd/2 - 0.2;
-    addPart(box(L-0.6, 0.04, Math.max(1, zSS1-0.3), 0x4a4f55, pitCX, ySS1 + 0.02, (zSS1-0.3)/2), A.ss1, { explode: new THREE.Vector3(0, 32, 0), layer: 'ss1' });
-    wall(L, hSS1, 0.28, 0xa39e94, pitCX, ySS1 + hSS1/2, 0.14, A.ss1, 32, 'ss1');
-    wallGapWest(hSS1, 0xa39e94, 0.14, ySS1 + hSS1/2, A.ss1, 32, 'ss1');
-    wall(0.28, hSS1, W, 0xa39e94, L-0.14, ySS1 + hSS1/2, pitCZ, A.ss1, 32, 'ss1');
-    wall(L, hSS1, 0.28, 0xa39e94, pitCX, ySS1 + hSS1/2, W-0.14, A.ss1, 32, 'ss1');
-
-    // norte SS1: 17, 18, 19 (as motos ficam só no SS2, sob a rampa)
-    stall(0.50 + SW/2, nZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 17, 'NORMAL');
-    stall(0.50 + SW + SW/2, nZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 18, 'NORMAL');
-    stall(0.50 + 2*SW + SW/2, nZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 19, 'NORMAL');
-
-    // Patamar e entrada da rampa no SS1 + mureta (abre no corredor, a oeste)
-    addPart(box(2.6, 0.16, rampWd - 0.6, 0x6a6e74, rampX0 - 0.9, yRampSS1, rampZc), A.ss1, { explode: new THREE.Vector3(0, 32, 0), layer: 'ss1' });
-    const murZ = rampZc - rampWd/2 + 0.06, murH = 1.30;
-    wall(rampLen - 3.4, murH, 0.16, 0x9a958c, rampX0 + 3.4 + (rampLen-3.4)/2, ySS1 + murH/2, murZ, A.ss1, 32, 'ss1');
-    wall(0.16, murH, rampWd - 1.2, 0x9a958c, rampX0, ySS1 + murH/2, rampZc + 0.4, A.ss1, 32, 'ss1');
-    const ent1 = labelSprite('ENTRADA  ·  SUBSOLO 1', '#e8edf2', 3.8, 0.52);
-    ent1.position.set(rampX0 - 0.2, ySS1 + 2.15, murZ - 1.1);
-    addPart(ent1, A.ss1, { explode: new THREE.Vector3(0, 32, 0), layer: 'ss1' });
-
-    // Acesso da rua até o portão oeste do SS1
-    const yStreet = 0.10, yGate = yRampSS1;
-    rampRun(-7.2, yStreet, 0.45, yGate, gateZ, gateWd - 0.3, A.ss1, 22, 'ss1');
-    addPart(box(3.0, 0.18, gateWd, mat(0xffffff, 0.9, { map: asphaltMap, env: 0.3 }), -8.4, yStreet, gateZ), A.ss1, { explode: new THREE.Vector3(-8, 22, 0), layer: 'ss1' });
-    // marco do portão de rolo
-    addPart(box(0.16, 2.44, 0.16, mat(0x3a4550, 0.4, { metal: 0.55 }), 0.22, yGate + 1.22, gateZ - gateWd/2), A.ss1, { explode: new THREE.Vector3(-6, 22, 0), layer: 'ss1' });
-    addPart(box(0.16, 2.44, 0.16, mat(0x3a4550, 0.4, { metal: 0.55 }), 0.22, yGate + 1.22, gateZ + gateWd/2), A.ss1, { explode: new THREE.Vector3(-6, 22, 0), layer: 'ss1' });
-    addPart(box(0.16, 0.14, gateWd, mat(0x3a4550, 0.4, { metal: 0.55 }), 0.22, yGate + 2.44, gateZ), A.ss1, { explode: new THREE.Vector3(-6, 22, 0), layer: 'ss1' });
-    const acesso = labelSprite('ACESSO VEÍCULOS', '#e8edf2', 3.6, 0.5);
-    acesso.position.set(-4.6, 1.85, gateZ);
-    addPart(acesso, A.ss1, { explode: new THREE.Vector3(-8, 22, 0), layer: 'ss1' });
-    // sul SS1: 20, 21, 22 PCD, núcleo, IDOSO, 23, 24, 25 PCD
-    stall(0.40 + SW/2, sulZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 20, 'NORMAL');
-    stall(0.40 + SW + SW/2, sulZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 21, 'NORMAL');
-    stall(0.40 + 2*SW + 1.25, sulZ, 2.50, stallLen, A.ss1, 32, 'ss1', ySS1, 22, 'PCD');
-    aisle(0.40 + 2*SW + 2.50 + 0.60, sulZ, 1.20, stallLen, A.ss1, 32, 'ss1', ySS1);
-    stall(CORE.x + CORE.l + 1.20, sulZ, 2.40, stallLen, A.ss1, 32, 'ss1', ySS1, null, 'IDOSO');
-    stall(CORE.x + CORE.l + 2.40 + SW/2, sulZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 23, 'NORMAL');
-    stall(CORE.x + CORE.l + 2.40 + SW + SW/2, sulZ, SW, stallLen, A.ss1, 32, 'ss1', ySS1, 24, 'NORMAL');
-    stall(CORE.x + CORE.l + 2.40 + 2*SW + 1.25, sulZ, 2.50, stallLen, A.ss1, 32, 'ss1', ySS1, 25, 'PCD');
-
-    // gerador previsto junto à vaga 20 (5,47 m² na planta)
-    addPart(box(2.4, 2.1, 2.3, 0xb7b1a6, 1.6, ySS1 + 1.15, 1.4), A.ss1, { explode: new THREE.Vector3(0, 32, 0), layer: 'ss1' });
-    const ger = labelSprite('GERADOR', '#e8edf2', 1.8, 0.42);
-    ger.position.set(1.6, ySS1 + 2.4, 1.4);
-    addPart(ger, A.ss1, { explode: new THREE.Vector3(0, 32, 0), layer: 'ss1' });
-
-    buildCore(ySS1, hSS1, A.ss1, 32, 'ss1', 0x9a948a, true);
-    coreLabels(ySS1, A.ss1, 32, 'ss1', 'SUBSOLO 1');
-
-    // --- Térreo ---
-    const yT = Y.terreo + 0.15;
-    const hT = 3.35;
-    const clinX0 = 12.2, clinL = L - clinX0, clinZ0 = 0.2, clinW = W - 0.4;
-    const zPark = gateZ - gateWd/2 - 0.3;
-    slab(clinX0 - 0.2, Math.max(4, zPark), 0.32, 0x7a7e84, clinX0/2, yT, Math.max(4, zPark)/2, A.terreo, 38, 'terreo');
-    // vagas descobertas 26–29 ao sul do acesso oeste (o corredor da rampa fica livre)
-    stall(3.15, 4.8, 2.50, 5.00, A.terreo, 38, 'terreo', yT, 27, 'NORMAL');
-    stall(5.75, 4.8, 2.50, 5.00, A.terreo, 38, 'terreo', yT, 26, 'NORMAL');
-    stall(8.8, 4.6, 5.00, 2.50, A.terreo, 38, 'terreo', yT, 29, 'NORMAL');
-    stall(8.8, 7.2, 5.00, 2.50, A.terreo, 38, 'terreo', yT, 28, 'NORMAL');
-    const estD = labelSprite('VAGAS 26 A 29', '#e8edf2', 2.6, 0.48);
-    estD.position.set(3.4, yT + 2.0, 10.8);
-    addPart(estD, A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo', onlyView: 'terreo' });
-    // pátio e floreiras
-    addPart(box(5.4, 0.18, 4.0, 0x6a6e74, 3.6, yT + 0.22, 3.4), A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo' });
-    addPart(box(5.4, 0.35, 0.7, 0x4e6a45, 3.6, yT + 0.38, 5.5), A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo' });
-    addPart(box(0.55, 0.55, 8.5, 0x4e6a45, 0.7, yT + 0.45, 6.5), A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo' });
-    addPart(box(2.4, 0.35, 0.7, 0x8a8d84, 2.6, yT + 0.38, 3.1), A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo' });
-    addPart(box(2.4, 0.35, 0.7, 0x8a8d84, 2.6, yT + 0.38, 3.9), A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo' });
-    const pat = labelSprite('PÁTIO DESCOBERTO', '#e8edf2', 2.8, 0.45);
-    pat.position.set(3.6, yT + 1.3, 3.4);
-    addPart(pat, A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo', onlyView: 'terreo' });
-
-    slab(clinL, clinW, 0.35, 0xcfc8b8, clinX0 + clinL/2, yT, clinZ0 + clinW/2, A.terreo, 38, 'terreo');
-    wall(clinL, hT, 0.28, 0xd6d0c4, clinX0 + clinL/2, yT + hT/2, clinZ0 + 0.14, A.terreo, 38, 'terreo');
-    wall(clinL, hT, 0.28, 0xd6d0c4, clinX0 + clinL/2, yT + hT/2, clinZ0 + clinW - 0.14, A.terreo, 38, 'terreo');
-    wall(0.28, hT, clinW, 0xd6d0c4, clinX0 + 0.14, yT + hT/2, clinZ0 + clinW/2, A.terreo, 38, 'terreo');
-    wall(0.28, hT, clinW, 0xd6d0c4, clinX0 + clinL - 0.14, yT + hT/2, clinZ0 + clinW/2, A.terreo, 38, 'terreo');
-    addPart(box(0.12, 2.15, 3.4, glassMat(0x8bb3c9, 0.5), clinX0 + 0.06, yT + 1.4, 4.4), A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo' });
-    for (let i = 0; i < 11; i++) {
-      addPart(box(0.06, 2.4, 0.16, mat(0x7a5a3a, 0.72, { env: 0.4 }), clinX0 + 0.08, yT + 1.4, 6.2 + i * 0.22), A.terreo, { explode: new THREE.Vector3(0, 38, 0), layer: 'terreo' });
-    }
-    windows(clinL - 1.2, 6, clinX0 + 0.6, yT + 1.7, clinZ0 + clinW + 0.08, true, A.terreo, 38, 'terreo');
-    windows(clinL - 2, 5, clinX0 + 1.0, yT + 1.7, clinZ0 - 0.08, true, A.terreo, 38, 'terreo');
-    windows(clinW - 2, 4, clinX0 + clinL + 0.08, yT + 1.7, clinZ0 + 1.0, false, A.terreo, 38, 'terreo');
-    buildCore(yT, hT, A.terreo, 38, 'terreo', 0xb8b3a8, true);
-    coreLabels(yT, A.terreo, 38, 'terreo', null);
-
-    // Layout interno do térreo (plantas: consultórios, exames, recepção)
-    const ih = 2.55, iy = yT;
-    const xW = clinX0 + 0.28, xE = clinX0 + clinL - 0.28, zS = clinZ0 + 0.28, zN = clinZ0 + clinW - 0.28;
-    const zMid = 7.90, zCirc = 11.85, zCons = 13.35;
-    const xCore0 = CORE.x - 0.06, xCore1 = CORE.x + CORE.l + 0.06;
-    // faixas horizontais
-    iw(xW, zMid, true, xCore0 - xW, A.terreo, 38, 'terreo', iy, ih);
-    iw(xCore1, zMid, true, xE - xCore1, A.terreo, 38, 'terreo', iy, ih);
-    iw(xW + 1.85, zCirc, true, xE - (xW + 1.85), A.terreo, 38, 'terreo', iy, ih);
-    iw(xW + 1.85, zCons, true, xE - (xW + 1.85), A.terreo, 38, 'terreo', iy, ih);
-    // recepção / espera (sudoeste)
-    iw(xCore0, zS, false, zMid - zS, A.terreo, 38, 'terreo', iy, ih);
-    roomFloor((xW+xCore0)/2, (zS+zMid)/2, xCore0-xW, zMid-zS, 'RECEPÇÃO\nESPERA', A.terreo, 38, 'terreo', yT, '#efe6d6');
-    // sul-leste: sanitários, infusão, consultório 05
-    const southRooms = [
-      [xCore1, 22.45, 'I.S.F. PAC'],
-      [22.55, 24.45, 'I.S.M. PAC'],
-      [24.55, 26.85, 'INFUSÃO'],
-      [26.95, xE, 'CONSULT.\nINDIF. 05']
-    ];
-    let px = xCore1;
-    for (const [a, b, name] of southRooms) {
-      if (a > px + 0.05) iw(a, zS, false, zMid - zS, A.terreo, 38, 'terreo', iy, ih);
-      roomFloor((a+b)/2, (zS+zMid)/2, b-a, zMid-zS, name, A.terreo, 38, 'terreo', yT, name.includes('CONSULT') ? '#e6eee8' : '#e4e8ee');
-      px = b;
-    }
-    // faixa do meio
-    const midRooms = [
-      [xW, 14.15, 'RESÍDUOS', '#e8e0d0'],
-      [14.25, 17.55, 'TESTE\nERGOMÉTRICO', '#e6eee8'],
-      [17.65, 19.35, 'I.S. /\nVESTIÁRIO', '#e4e8ee'],
-      [19.45, 22.35, 'ULTRASSONO\nGRAFIA', '#e6eee8'],
-      [22.45, 25.85, 'SALA DE\nPROCEDIMENTOS', '#e6eee8'],
-      [26.85, xE, 'SALA DE\nUTILIDADES', '#e8e0d0']
-    ];
-    iw(26.85, zMid, false, zCirc - zMid, A.terreo, 38, 'terreo', iy, ih);
-    for (const [a, b, name, fill] of midRooms) {
-      if (a > xW + 0.1) iw(a, zMid, false, zCirc - zMid, A.terreo, 38, 'terreo', iy, ih);
-      roomFloor((a+b)/2, (zMid+zCirc)/2, b-a, zCirc-zMid, name, A.terreo, 38, 'terreo', yT, fill);
-    }
-    roomFloor((xW+26.85)/2, (zCirc+zCons)/2, 26.85-xW-1.85, zCons-zCirc, 'CIRCULAÇÃO', A.terreo, 38, 'terreo', yT, '#f2efe8');
-    // consultório 04 e L.S. no eixo leste
-    iw(26.85, zCirc, false, zN - zCirc, A.terreo, 38, 'terreo', iy, ih);
-    iw(26.85, zCirc + 1.15, true, xE-26.85, A.terreo, 38, 'terreo', iy, ih);
-    roomFloor((26.85+xE)/2, zCirc + 0.55, xE-26.85, 1.15, 'L.S.', A.terreo, 38, 'terreo', yT, '#e4e8ee');
-    roomFloor((26.85+xE)/2, (zCirc+1.15+zCons)/2, xE-26.85, zCons-zCirc-1.15, 'CONSULT.\nINDIF. 04', A.terreo, 38, 'terreo', yT, '#e6eee8');
-    // fileira norte de consultórios
-    const northRooms = [
-      [14.15, 17.56, 'CONSULT.\nINDIF. 01'],
-      [17.66, 21.06, 'CONSULT.\nINDIF. 02'],
-      [21.16, 24.56, 'CONSULT.\nINDIF. 03'],
-      [24.66, 28.75, 'CONSULT.\nUROLOGIA / GINEC.']
-    ];
-    iw(xW + 1.85, zCons, false, zN - zCons, A.terreo, 38, 'terreo', iy, ih);
-    for (const [a, b, name] of northRooms) {
-      iw(a, zCons, false, zN - zCons, A.terreo, 38, 'terreo', iy, ih);
-      roomFloor((a+b)/2, (zCons+zN)/2, b-a, zN-zCons, name, A.terreo, 38, 'terreo', yT, '#e6eee8');
-    }
-    roomFloor((28.75+xE)/2, (zCons+zN)/2, Math.max(0.8, xE-28.75), zN-zCons, 'CIRCULAÇÃO', A.terreo, 38, 'terreo', yT, '#f2efe8');
-    slab(clinL, clinW, 0.3, 0xb9b3a6, clinX0 + clinL/2, Y.pav2 - 0.08, clinZ0 + clinW/2, A.terreo, 38, 'terreoTeto');
-
-    // --- 2º pavimento ---
-    const y2 = Y.pav2 + 0.15;
-    const h2 = 2.85;
-    const p2X0 = 12.2, p2L = 11.06, p2Z0 = 0.3, p2W = 10.00;
-    slab(p2L, p2W, 0.32, 0xd8cfbb, p2X0 + p2L/2, y2, p2Z0 + p2W/2, A.pav2, 44, 'pav2');
-    wall(p2L, h2, 0.28, 0xddd6c8, p2X0 + p2L/2, y2 + h2/2, p2Z0 + 0.14, A.pav2, 44, 'pav2');
-    wall(p2L, h2, 0.28, 0xddd6c8, p2X0 + p2L/2, y2 + h2/2, p2Z0 + p2W - 0.14, A.pav2, 44, 'pav2');
-    wall(0.28, h2, p2W, 0xddd6c8, p2X0 + 0.14, y2 + h2/2, p2Z0 + p2W/2, A.pav2, 44, 'pav2');
-    wall(0.28, h2, p2W, 0xddd6c8, p2X0 + p2L - 0.14, y2 + h2/2, p2Z0 + p2W/2, A.pav2, 44, 'pav2');
-    windows(p2L - 0.6, 3, p2X0 + 0.3, y2 + 1.5, p2Z0 + p2W + 0.08, true, A.pav2, 44, 'pav2');
-    windows(p2L - 1, 4, p2X0 + 0.5, y2 + 1.5, p2Z0 - 0.08, true, A.pav2, 44, 'pav2');
-    buildCore(y2, h2, A.pav2, 44, 'pav2', 0xc4bfb4, true);
-    coreLabels(y2, A.pav2, 44, 'pav2', '2º PAVIMENTO');
-    // ambientes do 2º (pediatria, espera, espaço kids) — 11,06 × 10,00 m
-    const p2ih = 2.2, p2xW = p2X0 + 0.22, p2xE = p2X0 + p2L - 0.22, p2zS = p2Z0 + 0.22, p2zN = p2Z0 + p2W - 0.22;
-    const p2zA = p2zS + 3.85, p2zB = p2zA + 0.10 + 1.80;
-    iw(p2xW, p2zA, true, 3.36, A.pav2, 44, 'pav2', y2, p2ih);
-    iw(p2xW + 3.36, p2zS, false, p2zA - p2zS, A.pav2, 44, 'pav2', y2, p2ih);
-    roomFloor(p2xW + 1.68, (p2zS+p2zA)/2, 3.36, p2zA-p2zS, 'CONSULT.\nPEDIATRIA 03', A.pav2, 44, 'pav2', y2, '#e6eee8');
-    iw(p2xW, p2zB, true, 3.36, A.pav2, 44, 'pav2', y2, p2ih);
-    roomFloor(p2xW + 1.68, (p2zA+p2zB)/2, 3.36, p2zB-p2zA, 'I.S. FEM /\nFRALDÁRIO', A.pav2, 44, 'pav2', y2, '#e4e8ee');
-    iw(p2xW + 4.05, p2zB, false, p2zN - p2zB, A.pav2, 44, 'pav2', y2, p2ih);
-    iw(p2xW + 7.55, p2zB, false, p2zN - p2zB, A.pav2, 44, 'pav2', y2, p2ih);
-    iw(p2xW, p2zB, true, p2xE - p2xW, A.pav2, 44, 'pav2', y2, p2ih);
-    roomFloor(p2xW + 2.02, (p2zB+p2zN)/2, 4.05, p2zN-p2zB, 'CONSULT.\nPEDIATRIA 01', A.pav2, 44, 'pav2', y2, '#e6eee8');
-    roomFloor(p2xW + 5.80, (p2zB+p2zN)/2, 3.40, p2zN-p2zB, 'CONSULT.\nPEDIATRIA 02', A.pav2, 44, 'pav2', y2, '#e6eee8');
-    roomFloor((p2xW+7.65+p2xE)/2, (p2zB+p2zN)/2, p2xE-(p2xW+7.65), p2zN-p2zB, 'CONSULT.\nINDIF. 06', A.pav2, 44, 'pav2', y2, '#e6eee8');
-    roomFloor(p2X0 + 8.8, p2zS + 1.7, 4.0, 3.2, 'ESPERA', A.pav2, 44, 'pav2', y2, '#efe6d6');
-    roomFloor(p2X0 + 8.8, p2zS + 0.7, 2.2, 1.2, 'ESPAÇO KIDS', A.pav2, 44, 'pav2', y2, '#efe6d6');
-    const terrX = clinX0 + p2L, terrL = clinL - p2L;
-    function rail(l, x, z, appear) {
-      addPart(box(l, 0.08, 0.08, mat(0x9aa0a6, 0.4, { metal: 0.5 }), x, Y.pav2 + 1.05, z), appear, { explode: new THREE.Vector3(0, 44, 0), layer: 'pav2' });
-      for (let i = 0; i < Math.max(2, Math.round(l/1.6)); i++) {
-        addPart(box(0.06, 1.0, 0.06, mat(0x9aa0a6, 0.4, { metal: 0.5 }), x - l/2 + 0.4 + i*1.6, Y.pav2 + 0.55, z), appear, { explode: new THREE.Vector3(0, 44, 0), layer: 'pav2' });
-      }
-    }
-    rail(terrL, clinX0 + p2L + terrL/2, clinZ0 + 0.2, A.pav2);
-    rail(terrL, clinX0 + p2L + terrL/2, clinZ0 + clinW - 0.2, A.pav2);
-    rail(clinW - p2W, p2X0 + p2L - 0.1, p2Z0 + p2W + (clinW-p2W)/2, A.pav2);
-    const terLbl = labelSprite('TERRAÇO DESCOBERTO', '#e8edf2', 3.6, 0.5);
-    terLbl.position.set(clinX0 + p2L + terrL/2, Y.pav2 + 1.6, clinZ0 + clinW/2);
-    addPart(terLbl, A.pav2, { explode: new THREE.Vector3(0, 44, 0), layer: 'pav2' });
-    slab(p2L + 0.3, p2W + 0.3, 0.28, 0x8b8580, p2X0 + p2L/2, Y.caixa - 0.05, p2Z0 + p2W/2, A.pav2, 44, 'pav2Teto');
-
-    // --- Caixa d'água ---
-    const yC = Y.caixa + 0.1;
-    const hC = Y.topo - Y.caixa - 0.15;
-    const cX = p2X0 + 6.4, cZ = p2Z0 + 5.4, cL = 6.0, cW = 4.8;
-    slab(cL, cW, 0.25, 0xc4a882, cX, yC, cZ, A.caixa, 48, 'caixa');
-    wall(cL, hC, 0.25, 0xc4a882, cX, yC + hC/2, cZ - cW/2 + 0.12, A.caixa, 48, 'caixa');
-    wall(cL, hC, 0.25, 0xc4a882, cX, yC + hC/2, cZ + cW/2 - 0.12, A.caixa, 48, 'caixa');
-    wall(0.25, hC, cW, 0xc4a882, cX - cL/2 + 0.12, yC + hC/2, cZ, A.caixa, 48, 'caixa');
-    wall(0.25, hC, cW, 0xc4a882, cX + cL/2 - 0.12, yC + hC/2, cZ, A.caixa, 48, 'caixa');
-    for (const dx of [-1.6, 0, 1.6]) {
-      addPart(box(0.7, 0.7, 0.1, 0x2c333b, cX + dx, yC + hC*0.55, cZ + cW/2 - 0.08), A.caixa, { explode: new THREE.Vector3(0, 48, 0), layer: 'caixa' });
-    }
-    addPart(cyl(0.85, 1.3, 0xb7c4cc, cX - 1.4, yC + 0.75, cZ - 0.8, 16), A.caixa, { explode: new THREE.Vector3(0, 48, 0), layer: 'caixa' });
-    addPart(cyl(0.85, 1.3, 0xb7c4cc, cX + 1.4, yC + 0.75, cZ - 0.8, 16), A.caixa, { explode: new THREE.Vector3(0, 48, 0), layer: 'caixa' });
-    addPart(cyl(0.85, 1.3, 0xb7c4cc, cX - 1.4, yC + 0.75, cZ + 0.8, 16), A.caixa, { explode: new THREE.Vector3(0, 48, 0), layer: 'caixa' });
-    addPart(cyl(0.85, 1.3, 0xb7c4cc, cX + 1.4, yC + 0.75, cZ + 0.8, 16), A.caixa, { explode: new THREE.Vector3(0, 48, 0), layer: 'caixa' });
-    slab(cL + 0.25, cW + 0.25, 0.22, 0xb8976c, cX, Y.topo - 0.05, cZ, A.caixa, 48, 'caixa');
-    const cxLbl = labelSprite('CAIXA D’ÁGUA', '#f0e2c8', 3.2, 0.5);
-    cxLbl.position.set(cX, Y.topo + 0.9, cZ);
-    addPart(cxLbl, A.caixa, { explode: new THREE.Vector3(0, 48, 0), layer: 'caixa' });
-
-    // UI da linha do tempo
+    // ---- UI da linha do tempo
     const ticksEl = document.getElementById('ticks');
     for (const m of [
       { t: 0, label: 'Set/26' },
@@ -1027,12 +374,13 @@
       el.innerHTML = `<div class="dot"></div>${m.label}`;
       ticksEl.appendChild(el);
     }
-
     const slider = document.getElementById('slider');
     const etapaNome = document.getElementById('etapaNome');
     const etapaDatas = document.getElementById('etapaDatas');
     const lista = document.getElementById('lista');
     const dataLabel = document.getElementById('dataLabel');
+    const btnTour = document.getElementById('btnTour');
+    const fadeEl = document.getElementById('fade');
     const viewBtns = {
       obra: document.getElementById('btnFim'),
       ss2: document.getElementById('btnSS2'),
@@ -1042,46 +390,59 @@
       rampa: document.getElementById('btnRampa')
     };
     function markView() {
-      for (const [k, b] of Object.entries(viewBtns)) b.classList.toggle('on', viewMode === k);
+      for (const [k, b] of Object.entries(viewBtns)) b.classList.toggle('on', !tour && viewMode === k);
+      btnTour.classList.toggle('on', !!tour);
+      btnTour.textContent = tour ? '■ Parar passeio' : '▶ Passeio pela obra';
+      document.body.classList.toggle('touring', !!tour);
     }
     function etapaEm(t) {
       let cur = ETAPAS[0];
       for (const e of ETAPAS) if (t + 0.0005 >= T(e.ini)) cur = e;
       return cur;
     }
+    function setGhost(p, on, k) {
+      const u = p.userData;
+      if (on) {
+        for (const r of u.mats) {
+          r.m.transparent = true;
+          r.m.opacity = (0.07 + (1 - k) * 0.09) * Math.min(1, r.op + 0.3);
+          r.m.depthWrite = false;
+          if (r.m.emissive) r.m.emissive.setHex(0x2a4a62);
+        }
+        if (u.ghost !== true) for (const me of u.meshes) me.castShadow = false;
+        u.ghost = true;
+      } else if (u.ghost !== false) {
+        for (const r of u.mats) {
+          r.m.transparent = r.tr; r.m.opacity = r.op; r.m.depthWrite = r.dw;
+          if (r.m.emissive && r.em) r.m.emissive.copy(r.em);
+          r.m.needsUpdate = true;
+        }
+        for (const me of u.meshes) {
+          const arr = Array.isArray(me.material) ? me.material : [me.material];
+          me.castShadow = !arr.every(m => (m.name || '').startsWith('vidro') && m.transparent) && !arr[0].name.startsWith('luminaria');
+        }
+        u.ghost = false;
+      }
+    }
     function apply(t) {
       const hidden = CUT[viewMode] || CUT.obra;
-      for (const mesh of parts) {
-        const a = mesh.userData.appear;
-        const matl = mesh.material;
-        if (mesh.userData.until != null && t >= mesh.userData.until - 0.0005) { mesh.visible = false; continue; }
+      for (const p of parts) {
+        const u = p.userData;
+        const a = u.appear;
+        if (u.until != null && t >= u.until - 0.0005) { p.visible = false; continue; }
+        if (u.isLabel && tour) { p.visible = false; continue; }
         const janela = 0.055;
         let k = 0;
         if (t < a) k = (t <= a - janela) ? 1 : (a - t) / janela;
         k = k * k * (3 - 2 * k);
-        mesh.position.copy(mesh.userData.rest).addScaledVector(mesh.userData.explode, k * 0.42);
-        const cut = hidden.has(mesh.userData.layer);
-        if (cut) { mesh.visible = false; continue; }
-        if (mesh.userData.onlyView && mesh.userData.onlyView !== viewMode) { mesh.visible = false; continue; }
-        if (matl && matl.userData.baseOpacity == null) matl.userData.baseOpacity = matl.opacity ?? 1;
-        if (matl && matl.emissive && matl.userData.baseEmissive == null) matl.userData.baseEmissive = matl.emissive.clone();
-        if (t >= a - 0.0005) {
-          mesh.visible = true;
-          if (matl) {
-            matl.opacity = matl.userData.baseOpacity;
-            matl.transparent = matl.userData.baseOpacity < 0.99;
-            matl.depthWrite = matl.userData.baseOpacity > 0.9;
-            if (matl.emissive && matl.userData.baseEmissive) matl.emissive.copy(matl.userData.baseEmissive);
-          }
-        } else if (mesh.userData.preview === 'ghost') {
-          mesh.visible = true;
-          if (matl) {
-            matl.transparent = true;
-            matl.opacity = 0.26 + (1 - k) * 0.16;
-            matl.depthWrite = false;
-            if (matl.emissive) matl.emissive.setHex(0x2a4a62);
-          }
-        } else mesh.visible = false;
+        p.position.copy(u.rest).addScaledVector(u.explode, k * 0.42);
+        if (hidden.has(u.layer)) { p.visible = false; continue; }
+        if (u.only && !u.only.includes(viewMode)) { p.visible = false; continue; }
+        if (t >= a - 0.0005) { p.visible = true; if (!u.isLabel) setGhost(p, false); }
+        else if (u.preview === 'ghost') {
+          p.visible = true;
+          if (u.isLabel) p.visible = false; else setGhost(p, true, k);
+        } else p.visible = false;
       }
       const date = tToDate(t);
       const etapa = etapaEm(t);
@@ -1098,16 +459,91 @@
     }
 
     const VIEWS = {
-      obra:   { pos: new THREE.Vector3(-24, 16, 32), tgt: new THREE.Vector3(14, 1.8, 8), t: 1, orbit: true },
-      ss2:    { pos: new THREE.Vector3(2, 16, 28),   tgt: new THREE.Vector3(16, Y.ss2 + 0.3, 10), t: 1, orbit: false },
-      ss1:    { pos: new THREE.Vector3(2, 16, 28),   tgt: new THREE.Vector3(16, Y.ss1 + 0.3, 10), t: 1, orbit: false },
-      terreo: { pos: new THREE.Vector3(22.4, 38, 16.5), tgt: new THREE.Vector3(22.4, 2.2, 10.2), t: 1, orbit: false },
-      pav2:   { pos: new THREE.Vector3(17.7, 28, 6.0), tgt: new THREE.Vector3(17.7, Y.pav2 + 0.3, 5.3), t: 1, orbit: false },
-      rampa:  { pos: new THREE.Vector3(-18, 7.5, 8.7), tgt: new THREE.Vector3(2.0, -0.5, 8.7), t: 1, orbit: false }
+      obra:   { pos: new THREE.Vector3(-22, 18, 30), tgt: new THREE.Vector3(14, 2.2, 8), t: 1 },
+      ss2:    { pos: new THREE.Vector3(9, 26, 33),   tgt: new THREE.Vector3(16.5, Y.ss2 + 0.3, 12.3), t: 1 },
+      ss1:    { pos: new THREE.Vector3(9, 26, 33),   tgt: new THREE.Vector3(16.5, Y.ss1 + 0.3, 12.3), t: 1 },
+      terreo: { pos: new THREE.Vector3(16.0, 44, 22), tgt: new THREE.Vector3(16.0, 2.0, 10.4), t: 1 },
+      pav2:   { pos: new THREE.Vector3(19.5, 34, 15.5), tgt: new THREE.Vector3(19.5, Y.pav2 + 0.3, 5.6), t: 1 },
+      rampa:  { pos: new THREE.Vector3(-17, 7.0, 8.7), tgt: new THREE.Vector3(3.0, -0.6, 8.7), t: 1 }
     };
+
+    // ---- Passeio pela obra: câmera em curva suave (rua → fachada → rampa → SS1 → SS2), corte, vista aérea
+    const TOUR_A = [
+      [-46, 4.0, -30,   0, 2.6, 6],
+      [-27, 2.4, -11,   6, 3.0, 6],
+      [-17.5, 1.9, 2.5, 12, 3.4, 5],
+      [-13, 7.5, 17,    14, 3.4, 8],
+      [-9.5, 3.4, 11,   2, -0.4, 8.7],
+      [-6.0, 1.55, 8.7, 3, -0.7, 8.7],
+      [-0.8, 0.55, 8.7, 8, 0.0, 8.9],
+      [7.5, 0.45, 9.0,  15, 0.1, 11],
+      [13.0, 0.4, 9.9,  18, -0.2, 12.5],
+      [16.6, 0.25, 11.6, 24, -1.6, 13.6],
+      [21.0, -0.5, 13.2, 29, -2.5, 13.4],
+      [27.0, -1.55, 12.2, 22, -2.6, 4.5],
+      [24.0, -1.65, 7.0, 6, -2.4, 6.0]
+    ];
+    const TOUR_B = [
+      [36, 4.5, 24,  16, 3.5, 8],
+      [40, 15, 34,   16, 2.5, 8],
+      [12, 27, 44,   15, 1.5, 8],
+      [-22, 24, 30,  14, 1.5, 8]
+    ];
+    function mkCurves(arr) {
+      return {
+        pos: new THREE.CatmullRomCurve3(arr.map(a => new THREE.Vector3(a[0], a[1], a[2])), false, 'centripetal'),
+        tgt: new THREE.CatmullRomCurve3(arr.map(a => new THREE.Vector3(a[3], a[4], a[5])), false, 'centripetal')
+      };
+    }
+    const CA = mkCurves(TOUR_A), CB = mkCurves(TOUR_B);
+    const DUR_A = 34, DUR_FADE = 1.2, DUR_B = 12;
+    const TOUR_TOTAL = DUR_A + DUR_FADE + DUR_B;
+    let tour = null;
+    const ease = (x) => x * x * (3 - 2 * x);
+    function tourPose(s) {
+      // s em segundos desde o início
+      let fade = 0;
+      let P, Q;
+      if (s <= DUR_A) {
+        const u = ease(Math.min(1, s / DUR_A)) * 0.15 + (s / DUR_A) * 0.85;
+        P = CA.pos.getPoint(u); Q = CA.tgt.getPoint(u);
+        fade = Math.max(0, (s - (DUR_A - 0.8)) / 0.8);
+      } else if (s <= DUR_A + DUR_FADE) {
+        P = CB.pos.getPoint(0); Q = CB.tgt.getPoint(0);
+        fade = 1 - (s - DUR_A) / DUR_FADE;
+      } else {
+        const u = ease(Math.min(1, (s - DUR_A - DUR_FADE) / DUR_B));
+        P = CB.pos.getPoint(u); Q = CB.tgt.getPoint(u);
+      }
+      return { P, Q, fade: Math.min(1, Math.max(0, fade)) };
+    }
+    function startTour() {
+      viewMode = 'obra';
+      tour = { t0: performance.now(), fixed: null };
+      camFly = null;
+      controls.enabled = false;
+      setTarget(1, true);
+      markView();
+    }
+    function stopTour() {
+      tour = null;
+      controls.enabled = true;
+      fadeEl.style.opacity = 0;
+      apply(displayT);
+      markView();
+    }
+    function updateTour(now) {
+      const s = tour.fixed != null ? tour.fixed : (now - tour.t0) / 1000;
+      const { P, Q, fade } = tourPose(Math.min(s, TOUR_TOTAL));
+      camera.position.copy(P);
+      controls.target.copy(Q);
+      camera.lookAt(Q);
+      fadeEl.style.opacity = fade.toFixed(3);
+      if (tour.fixed == null && s >= TOUR_TOTAL) stopTour();
+    }
+
     let targetT = dateToT(HOJE);
     let displayT = targetT;
-    let dragging = false;
     let anim = null;
     function setTarget(t, snap) {
       targetT = t;
@@ -1116,62 +552,99 @@
       else anim = { from: displayT, to: t, t0: performance.now(), dur: 1400 };
     }
     function flyTo(mode) {
+      if (tour) stopTour();
       viewMode = mode;
       const v = VIEWS[mode];
       setTarget(1, true);
       markView();
-      controls.autoRotate = false;
-      camFly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: v.pos.clone(), t1: v.tgt.clone(), k: 0, orbit: !!v.orbit };
+      camFly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: v.pos.clone(), t1: v.tgt.clone(), k: 0 };
     }
     window.__qaSnap = (mode) => {
+      if (tour) stopTour();
       const v = VIEWS[mode];
       viewMode = mode;
       setTarget(v.t ?? 1, true);
       markView();
-      controls.autoRotate = false;
       camFly = null;
       camera.position.copy(v.pos);
       controls.target.copy(v.tgt);
       controls.update();
+      renderFrame();
+      return true;
+    };
+    window.__qaCam = (mode, p, q) => {
+      if (tour) stopTour();
+      viewMode = mode; setTarget(1, true); markView(); camFly = null;
+      camera.position.set(...p); controls.target.set(...q); controls.update();
+      renderFrame();
+      return true;
+    };
+    window.__qaHoje = () => {
+      if (tour) stopTour();
+      viewMode = 'obra'; markView(); camFly = null;
+      setTarget(dateToT(HOJE), true);
+      camera.position.copy(VIEWS.obra.pos); controls.target.copy(VIEWS.obra.tgt); controls.update();
+      renderFrame();
+      return fmtDate(HOJE);
+    };
+    // QA: congela o passeio no segundo pedido (negativo encerra)
+    window.__qaTour = (sec) => {
+      if (sec < 0) { if (tour) stopTour(); return null; }
+      if (!tour) startTour();
+      tour.fixed = sec;
+      apply(displayT);
+      updateTour(performance.now());
+      renderFrame();
+      return { total: TOUR_TOTAL, pos: camera.position.toArray().map(v => +v.toFixed(2)) };
     };
 
     slider.value = Math.round(targetT * 1000);
-    slider.addEventListener('pointerdown', () => { dragging = true; });
-    slider.addEventListener('pointerup', () => { dragging = false; });
     slider.addEventListener('input', () => {
+      if (tour) stopTour();
       viewMode = 'obra';
       markView();
-      controls.autoRotate = false;
       targetT = slider.value / 1000;
       anim = null;
       displayT = targetT;
       apply(displayT);
     });
-    document.getElementById('btnInicio').onclick = () => { viewMode = 'obra'; markView(); controls.autoRotate = false; setTarget(0, false); };
+    document.getElementById('btnInicio').onclick = () => { if (tour) stopTour(); viewMode = 'obra'; markView(); setTarget(0, false); };
     document.getElementById('btnFim').onclick = () => flyTo('obra');
     document.getElementById('btnHoje').onclick = () => {
+      if (tour) stopTour();
       viewMode = 'obra'; markView();
-      controls.autoRotate = false;
       setTarget(dateToT(HOJE), false);
-      camFly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: VIEWS.obra.pos.clone(), t1: VIEWS.obra.tgt.clone(), k: 0, orbit: false };
+      camFly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: VIEWS.obra.pos.clone(), t1: VIEWS.obra.tgt.clone(), k: 0 };
     };
     document.getElementById('btnSS2').onclick = () => flyTo('ss2');
     document.getElementById('btnSS1').onclick = () => flyTo('ss1');
     document.getElementById('btnTerreo').onclick = () => flyTo('terreo');
     document.getElementById('btnPav2').onclick = () => flyTo('pav2');
     document.getElementById('btnRampa').onclick = () => flyTo('rampa');
+    btnTour.onclick = () => { if (tour) stopTour(); else startTour(); };
 
     function resize() {
       camera.aspect = innerWidth / innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(innerWidth, innerHeight, false);
+      if (composer) { composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(innerWidth, innerHeight); }
+    }
+    function renderFrame() {
+      if (composer) composer.render(); else renderer.render(scene, camera);
+      // rótulos (camada 1) por cima da imagem final
+      const bg = scene.background, fog = scene.fog;
+      scene.background = null; scene.fog = null;
+      renderer.autoClear = false; renderer.shadowMap.autoUpdate = false;
+      camera.layers.set(1);
+      renderer.render(scene, camera);
+      camera.layers.set(0);
+      renderer.autoClear = true; renderer.shadowMap.autoUpdate = true;
+      scene.background = bg; scene.fog = fog;
     }
     addEventListener('resize', resize);
-    resize();
-    apply(displayT);
-    markView();
+
     let lastTs = performance.now();
-    (function loop(ts) {
+    function loop(ts) {
       requestAnimationFrame(loop);
       const dt = Math.min(0.05, (ts - lastTs) / 1000) || 0.016;
       lastTs = ts;
@@ -1185,17 +658,38 @@
         displayT = targetT;
         apply(displayT);
       }
-      if (camFly) {
-        camFly.k = Math.min(1, camFly.k + dt / 1.15);
-        const e = 1 - Math.pow(1 - camFly.k, 3);
-        camera.position.lerpVectors(camFly.p0, camFly.p1, e);
-        controls.target.lerpVectors(camFly.t0, camFly.t1, e);
-        if (camFly.k >= 1) {
-          camFly = null;
+      if (tour) updateTour(ts);
+      else {
+        if (camFly) {
+          camFly.k = Math.min(1, camFly.k + dt / 1.15);
+          const e = 1 - Math.pow(1 - camFly.k, 3);
+          camera.position.lerpVectors(camFly.p0, camFly.p1, e);
+          controls.target.lerpVectors(camFly.t0, camFly.t1, e);
+          if (camFly.k >= 1) camFly = null;
         }
+        controls.update();
       }
-      controls.update();
-      renderer.render(scene, camera);
+      renderFrame();
+    }
+
+    (async () => {
+      try {
+        await Promise.all([loadSky(), loadModel()]);
+      } catch (e) {
+        loadTxt.textContent = 'Não foi possível carregar o modelo 3D. Recarregue a página.';
+        console.error(e);
+        return;
+      }
+      setupComposer();
+      resize();
+      apply(displayT);
+      markView();
+      window.__qaLoadMs = Math.round(performance.now() - t0Load);
+      const ld = document.getElementById('loading');
+      ld.style.opacity = 0;
+      setTimeout(() => ld.remove(), 700);
+      window.__qaReady = true;
+      requestAnimationFrame(loop);
     })();
   </script>
 </body>
