@@ -6,6 +6,7 @@
   <link rel="icon" href="data:," />
   <title>Obra Dr. Clóvis — andamento da construção</title>
   <!-- visual-v8-blender -->
+  <!-- visual-v8b-paineis -->
   <script type="importmap">
   { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
   </script>
@@ -55,6 +56,18 @@
     button.tour { background: #143a2c; border-color: #2f7a57; color: #bff0d6; }
     button.tour.on { background: #2f7a57; color: #fff; }
     body.touring .top, body.touring .hint { opacity: .25; transition: opacity .4s; }
+    .top { align-items: flex-start; }
+    .card { position: relative; }
+    .mini { position: absolute; top: 8px; right: 8px; width: 24px; height: 24px; padding: 0; line-height: 20px; font-size: 15px; font-weight: 700; border-radius: 6px; }
+    .card .title, .info h2, .bar-head { padding-right: 30px; }
+    .card.min .sub, .card.min .legend { display: none; }
+    .info.min .datas, .info.min .lista { display: none; }
+    .info.min .etapa { font-size: 14px; margin: 0; }
+    .bottom.min .ticks, .bottom.min .hint { display: none; }
+    .bottom.min .actions { margin-top: 4px; }
+    #btnUI { position: absolute; right: 16px; bottom: 16px; z-index: 4; display: none; background: var(--panel); padding: 8px 14px; font-size: 13px; }
+    body.semui .top, body.semui .bottom { display: none; }
+    body.semui #btnUI { display: block; }
   </style>
 </head>
 <body>
@@ -62,7 +75,8 @@
   <div id="fade"></div>
   <div id="loading"><div class="title">Obra Dr. Clóvis</div><div class="bar"><i id="loadBar"></i></div><span id="loadTxt">Carregando modelo 3D…</span></div>
   <div class="top">
-    <div class="card">
+    <div class="card" id="cardInfo">
+      <button type="button" class="mini" data-min="cardInfo" title="Minimizar">–</button>
       <div class="title">Obra Dr. Clóvis — andamento da construção</div>
       <div class="sub">Modelo 3D feito no Blender a partir das plantas (fachada, ambientes, vagas e rampas). A rampa da rua entra no subsolo 1 pelo portão oeste; dali, outra rampa sobre as motos desce para o subsolo 2. Use os botões para ver cada pavimento, a rampa ou fazer o passeio pela obra.</div>
       <div class="legend">
@@ -74,14 +88,16 @@
         <span><i class="sw" style="background:#7ec8ff"></i>Elevador</span>
       </div>
     </div>
-    <div class="card info">
+    <div class="card info" id="cardEtapa">
+      <button type="button" class="mini" data-min="cardEtapa" title="Minimizar">–</button>
       <h2>Etapa nesta data</h2>
       <div class="etapa" id="etapaNome">—</div>
       <div class="datas" id="etapaDatas">—</div>
       <ul class="lista" id="lista"></ul>
     </div>
   </div>
-  <div class="bottom">
+  <div class="bottom" id="cardTempo">
+    <button type="button" class="mini" data-min="cardTempo" title="Minimizar">–</button>
     <div class="bar-head">
       <strong>Linha do tempo da obra</strong>
       <span id="dataLabel">—</span>
@@ -98,9 +114,12 @@
       <button type="button" id="btnPav2">Ver 2º pavimento</button>
       <button type="button" id="btnRampa">Ver rampa de acesso</button>
       <button type="button" class="tour" id="btnTour">▶ Passeio pela obra</button>
+      <button type="button" id="btnRotulos">Esconder nomes</button>
+      <button type="button" id="btnSemUI">Esconder painéis</button>
     </div>
     <div class="hint">Arraste a barra para montar ou desmontar. Gire o modelo e use a roda para aproximar. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
   </div>
+  <button type="button" id="btnUI">Mostrar painéis</button>
     <script type="module">
     import * as THREE from 'three';
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -430,7 +449,7 @@
         const u = p.userData;
         const a = u.appear;
         if (u.until != null && t >= u.until - 0.0005) { p.visible = false; continue; }
-        if (u.isLabel && tour) { p.visible = false; continue; }
+        if (u.isLabel && (tour || !rotulosOn)) { p.visible = false; continue; }
         const janela = 0.055;
         let k = 0;
         if (t < a) k = (t <= a - janela) ? 1 : (a - t) / janela;
@@ -499,6 +518,33 @@
     const DUR_A = 34, DUR_FADE = 1.2, DUR_B = 12;
     const TOUR_TOTAL = DUR_A + DUR_FADE + DUR_B;
     let tour = null;
+    let rotulosOn = true;
+    // Painéis minimizáveis (lembra a escolha no navegador)
+    const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+    function setMin(id, on) {
+      const el = document.getElementById(id);
+      el.classList.toggle('min', on);
+      const b = el.querySelector('.mini');
+      b.textContent = on ? '+' : '–';
+      b.title = on ? 'Expandir' : 'Minimizar';
+      lsSet('min_' + id, on ? '1' : '0');
+    }
+    for (const b of document.querySelectorAll('.mini')) {
+      const id = b.dataset.min;
+      const saved = lsGet('min_' + id);
+      setMin(id, saved == null ? (id === 'cardInfo') : saved === '1');
+      b.onclick = () => setMin(id, !document.getElementById(id).classList.contains('min'));
+    }
+    const btnRotulos = document.getElementById('btnRotulos');
+    btnRotulos.onclick = () => {
+      rotulosOn = !rotulosOn;
+      btnRotulos.textContent = rotulosOn ? 'Esconder nomes' : 'Mostrar nomes';
+      btnRotulos.classList.toggle('on', !rotulosOn);
+      apply(displayT);
+    };
+    document.getElementById('btnSemUI').onclick = () => document.body.classList.add('semui');
+    document.getElementById('btnUI').onclick = () => document.body.classList.remove('semui');
     const ease = (x) => x * x * (3 - 2 * x);
     function tourPose(s) {
       // s em segundos desde o início
