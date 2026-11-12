@@ -8,10 +8,10 @@
     :root {
       --bg: #0f1419; --panel: #161d25f2; --line: #2a3542; --text: #e8eef4;
       --muted: #9aa8b6; --done: #3dba7a; --todo: #7a8b9c; --today: #f0b429; --accent: #4ea3d9;
-      --room: #2a333c; --room-stroke: #8a9aaa; --room-consult: #3a332c;
-      --room-wet: #1e3344; --room-circ: #24303a; --room-wait: #2e3a36;
-      --core: #3a4148; --elv: #1a4a62; --ramp: #c4a35a; --grass: #2a3828;
-      --street: #3a3f46; --stall: #4a4f56; --pcd: #2c6aa0; --idoso: #8a6a2a; --moto: #3a3a36;
+      --room: #eeede9; --room-stroke: #4a4f56; --room-consult: #f4efe6;
+      --room-wet: #e3ecf1; --room-circ: #dcdad4; --room-wait: #eef2ea;
+      --core: #c9ccce; --elv: #bfe1f5; --ramp: #c4a35a; --grass: #6f9a3e;
+      --street: #3d4044; --stall: #b4b8bb; --pcd: #2c6aa0; --idoso: #b0832c; --moto: #a5a9ac;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: "Segoe UI", system-ui, sans-serif; overflow: hidden; }
@@ -45,13 +45,13 @@
     button.on { background: #1a3a4e; border-color: var(--accent); color: #cfe8f6; }
     .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.4; }
     .room { cursor: pointer; }
-    .room:hover .fill { filter: brightness(1.25); }
-    .room.on .fill { stroke: var(--today); stroke-width: 0.12; filter: brightness(1.2); }
-    .lab { font-size: 0.38px; font-family: "Segoe UI", system-ui, sans-serif; fill: #e8eef4; text-anchor: middle; pointer-events: none; font-weight: 650; }
+    .room:hover .fill { filter: brightness(0.93); }
+    .room.on .fill { stroke: var(--today); stroke-width: 0.16; filter: brightness(0.95); }
+    .lab { font-size: 0.38px; font-family: "Segoe UI", system-ui, sans-serif; fill: #1f262d; text-anchor: middle; pointer-events: none; font-weight: 650; }
     .lab.sm { font-size: 0.30px; font-weight: 600; }
-    .lab.xs { font-size: 0.26px; fill: #c5d0da; font-weight: 600; }
-    .lab.muted { fill: #9aa8b6; font-weight: 600; }
-    .area { font-size: 0.26px; fill: #9aa8b6; text-anchor: middle; pointer-events: none; }
+    .lab.xs { font-size: 0.26px; fill: #4a535c; font-weight: 600; }
+    .lab.muted { fill: #e8eef4; font-weight: 600; }
+    .area { font-size: 0.26px; fill: #6a737c; text-anchor: middle; pointer-events: none; }
   </style>
 </head>
 <body>
@@ -61,13 +61,13 @@
       <h1>Obra Dr. Clóvis — planta 2D</h1>
       <div class="sub">Absolutta Engenharia. Ambientes, vagas, rampa, escada e elevador lidos na planta 01_ARQ_EX_LAY_R02. Use os botões para trocar de pavimento.</div>
       <div class="legend">
-        <span><i class="sw" style="background:#4a4f56"></i>Vaga normal</span>
+        <span><i class="sw" style="background:#b4b8bb"></i>Vaga normal</span>
         <span><i class="sw" style="background:#2c6aa0"></i>PCD</span>
-        <span><i class="sw" style="background:#8a6a2a"></i>Idoso</span>
-        <span><i class="sw" style="background:#3a3a36"></i>Moto</span>
+        <span><i class="sw" style="background:#b0832c"></i>Idoso</span>
+        <span><i class="sw" style="background:#a5a9ac"></i>Moto</span>
         <span><i class="sw" style="background:#c4a35a"></i>Rampa</span>
         <span><i class="sw" style="background:#7ec8ff"></i>Elevador</span>
-        <span><i class="sw" style="background:#cfc8b8;outline:1px solid #555"></i>Ambiente</span>
+        <span><i class="sw" style="background:#eeede9;outline:1px solid #555"></i>Ambiente</span>
       </div>
     </div>
     <div class="card info" id="ficha">
@@ -215,7 +215,7 @@ const DATA = {
   },
   terreo: {
     titulo: 'Térreo — clínica e acesso',
-    nota: 'A boca da rampa de veículos fica a oeste, na rua. Recepção na entrada sul da clínica.',
+    nota: 'A rampa de veículos desce da rua, a oeste, direto ao Subsolo 1 (veja o Subsolo 1). Recepção na entrada sul da clínica.',
     slab: [clinX0, 0.2, L - clinX0, W - 0.4],
     patio: true,
     items: [
@@ -223,7 +223,6 @@ const DATA = {
       stallDef(6.40, 4.90, 2.50, 5.00, 26, 'NORMAL'),
       stallDef(6.10, 12.50, 5.00, 2.50, 28, 'NORMAL', 1),
       stallDef(6.10, 9.90, 5.00, 2.50, 29, 'NORMAL', 1),
-      rampBoca(),
       room('recepcao', 'Recepção / espera', 12.35, 0.35, 4.15, 7.70, 'wait', '22,66 m²'),
       room('floreira', 'Floreira', 12.45, 0.40, 1.70, 0.70, 'circ'),
       ...coreRooms('terreo'),
@@ -336,20 +335,20 @@ function renderFluxo() {
 
 function defs() {
   return `<defs>
-    <pattern id="rampH" width="0.55" height="0.55" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-      <rect width="0.55" height="0.55" fill="#2f2a1c"/>
-      <rect width="0.22" height="0.55" fill="#c4a35a" opacity="0.85"/>
+    <pattern id="rampH" width="0.55" height="0.55" patternUnits="userSpaceOnUse" patternTransform="rotate(90)">
+      <rect width="0.55" height="0.55" fill="#9da2a6"/>
+      <rect width="0.08" height="0.55" fill="#8a8f94"/>
     </pattern>
     <pattern id="terH" width="0.7" height="0.7" patternUnits="userSpaceOnUse">
-      <rect width="0.7" height="0.7" fill="#2e382c"/>
-      <path d="M0 0.7 L0.7 0" stroke="#4e6a45" stroke-width="0.04"/>
+      <rect width="0.7" height="0.7" fill="#7fa64a"/>
+      <path d="M0 0.7 L0.7 0" stroke="#6f9440" stroke-width="0.04"/>
     </pattern>
     <pattern id="asphalt" width="1.2" height="1.2" patternUnits="userSpaceOnUse">
-      <rect width="1.2" height="1.2" fill="#3a3f46"/>
-      <rect width="0.06" height="1.2" fill="#444a52"/>
+      <rect width="1.2" height="1.2" fill="#3d4044"/>
+      <rect width="0.06" height="1.2" fill="#43474c"/>
     </pattern>
     <filter id="slabSh" x="-2%" y="-2%" width="104%" height="108%">
-      <feDropShadow dx="0" dy="0.12" stdDeviation="0.18" flood-color="#000" flood-opacity="0.45"/>
+      <feDropShadow dx="0" dy="0.12" stdDeviation="0.18" flood-color="#000" flood-opacity="0.35"/>
     </filter>
   </defs>`;
 }
@@ -357,12 +356,12 @@ function defs() {
 function chevrons(x, z, l, w, dir) {
   const cy = y(z + w/2);
   const n = Math.max(2, Math.floor((l - 1.6) / 1.35));
-  let s = `<line x1="${x+0.4}" y1="${cy}" x2="${x+l-0.4}" y2="${cy}" stroke="#e8d29a" stroke-width="0.045" stroke-dasharray="0.25 0.18" opacity="0.8"/>`;
+  let s = `<line x1="${x+0.4}" y1="${cy}" x2="${x+l-0.4}" y2="${cy}" stroke="#ffffff" stroke-width="0.05" stroke-dasharray="0.25 0.18" opacity="0.9"/>`;
   for (let i = 0; i < n; i++) {
     const t = (i + 0.7) / (n + 0.4);
     const cx = dir === 1 ? x + t * l : x + l - t * l;
-    if (dir === 1) s += `<polygon points="${cx+0.38},${cy} ${cx-0.22},${cy-0.26} ${cx-0.22},${cy+0.26}" fill="#f0d78a"/>`;
-    else s += `<polygon points="${cx-0.38},${cy} ${cx+0.22},${cy-0.26} ${cx+0.22},${cy+0.26}" fill="#f0d78a"/>`;
+    if (dir === 1) s += `<polygon points="${cx+0.38},${cy} ${cx-0.22},${cy-0.26} ${cx-0.22},${cy+0.26}" fill="#ffffff"/>`;
+    else s += `<polygon points="${cx-0.38},${cy} ${cx+0.22},${cy-0.26} ${cx+0.22},${cy+0.26}" fill="#ffffff"/>`;
   }
   return s;
 }
@@ -372,9 +371,9 @@ function badge(tx, tz, label, sub) {
   const th = sub ? 0.95 : 0.62;
   const top = y(tz) - th - 0.35;
   return `<g pointer-events="none">
-    <rect x="${tx-tw/2}" y="${top}" width="${tw}" height="${th}" rx="0.12" fill="#161d25" stroke="#e8d29a" stroke-width="0.05"/>
-    <text class="lab xs" x="${tx}" y="${top + (sub ? 0.38 : 0.42)}" fill="#f0d78a">${label}</text>
-    ${sub ? `<text class="lab xs" x="${tx}" y="${top + 0.74}" fill="#c5d0da">${sub}</text>` : ''}
+    <rect x="${tx-tw/2}" y="${top}" width="${tw}" height="${th}" rx="0.12" fill="#1b2229" stroke="#3a4552" stroke-width="0.04"/>
+    <text class="lab xs" x="${tx}" y="${top + (sub ? 0.38 : 0.42)}" style="fill:#ffffff">${label}</text>
+    ${sub ? `<text class="lab xs" x="${tx}" y="${top + 0.74}" style="fill:#c5d0da">${sub}</text>` : ''}
   </g>`;
 }
 
@@ -383,25 +382,23 @@ function drawRamp(it, i) {
   const cy = z + w/2;
   const cx = x + l/2;
   let s = `<g class="room" data-i="${i}">`;
-  s += `<rect class="fill" x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="url(#rampH)" stroke="#e8d29a" stroke-width="0.09"/>`;
+  s += `<rect class="fill" x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="url(#rampH)" stroke="#4a4f56" stroke-width="0.12"/>`;
   if (role === 'interna') {
-    s += `<rect x="${x}" y="${y(z+w)}" width="${l}" height="0.18" fill="#6a6248" pointer-events="none"/>`;
-    s += `<rect x="${x}" y="${y(z)}" width="${l}" height="0.18" fill="#6a6248" pointer-events="none"/>`;
+    s += `<rect x="${x}" y="${y(z+w)}" width="${l}" height="0.18" fill="#5d6268" pointer-events="none"/>`;
+    s += `<rect x="${x}" y="${y(z)}" width="${l}" height="0.18" fill="#5d6268" pointer-events="none"/>`;
   }
   if (role === 'acesso' || role === 'boca') {
     const gx = x + l;
-    s += `<line x1="${gx}" y1="${y(z)}" x2="${gx}" y2="${y(z+w)}" stroke="#f0d78a" stroke-width="0.1" stroke-dasharray="0.22 0.14"/>`;
-    s += `<text class="lab xs" x="${gx+0.28}" y="${y(cy)+0.1}" fill="#f0d78a">PORTÃO</text>`;
+    s += `<line x1="${gx}" y1="${y(z)}" x2="${gx}" y2="${y(z+w)}" stroke="#f0b429" stroke-width="0.14" stroke-dasharray="0.22 0.14"/>`;
+    s += `<text class="lab xs" x="${gx+0.28}" y="${y(cy)+0.1}" style="fill:#1f262d">PORTÃO</text>`;
   }
   s += chevrons(x, z, l, w, dir);
   if (role === 'boca') {
-    s += `<text class="lab sm" x="${cx}" y="${y(cy)+0.08}" fill="#f0d78a">ENTRADA NO SUBSOLO 1</text>`;
+    s += `<text class="lab sm" x="${cx}" y="${y(cy)+0.08}" style="fill:#1f262d">ENTRADA NO SUBSOLO 1</text>`;
     s += `<text class="lab xs" x="${cx}" y="${y(cy)+0.48}">DESCE DA RUA · NÃO SEGUE AO SS2</text>`;
   } else if (role === 'acesso') {
-    s += `<text class="lab sm" x="${cx}" y="${y(cy)+0.08}" fill="#f0d78a">ENTRADA NO SUBSOLO 1</text>`;
-    s += `<text class="lab xs" x="${cx}" y="${y(cy)+0.48}">DA RUA · i=13,61% · para aqui</text>`;
   } else {
-    s += `<text class="lab" x="${cx}" y="${y(cy)+0.12}" fill="#f8e7b0">RAMPA INTERNA</text>`;
+    s += `<text class="lab" x="${cx}" y="${y(cy)+0.12}" style="fill:#1f262d">RAMPA INTERNA</text>`;
     s += `<text class="lab xs" x="${cx}" y="${y(cy)+0.52}">${verb} · i=19,05% · 13,65 m</text>`;
   }
   s += `</g>`;
@@ -426,9 +423,9 @@ function drawStall(it, i) {
   const label = it.kind === 'MOTO' ? `M${it.num}` : it.kind === 'IDOSO' ? 'IDOSO' : (it.num != null ? String(it.num) : '');
   const sub = it.kind === 'PCD' ? 'PCD' : it.kind === 'MOTO' ? '' : it.kind === 'IDOSO' ? '' : 'NORMAL';
   return `<g class="room" data-i="${i}">
-    <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="${fill}" stroke="#d0d6dc" stroke-width="0.06" rx="0.06"/>
-    <text class="lab" x="${cx}" y="${y(cz)+0.12}">${label}</text>
-    ${sub ? `<text class="lab xs" x="${cx}" y="${y(cz)+0.42}">${sub}</text>` : ''}
+    <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="${fill}" stroke="#ffffff" stroke-width="0.1"/>
+    <text class="lab" x="${cx}" y="${y(cz)+0.12}" style="fill:#ffffff;font-size:0.55px;font-weight:700">${label}</text>
+    ${sub ? `<text class="lab xs" x="${cx}" y="${y(cz)+0.48}" style="fill:#ffffff">${sub}</text>` : ''}
   </g>`;
 }
 
@@ -441,17 +438,17 @@ function drawRoom(it, i) {
   let ty = y(cz) - (lines.length - 1) * 0.2;
   const texts = lines.map((ln, k) => `<text class="lab ${fs}" x="${cx}" y="${ty + k*0.4}">${ln}</text>`).join('');
   const area = it.area && it.w > 2 && it.l > 2 ? `<text class="area" x="${cx}" y="${ty + lines.length*0.4}">${it.area}</text>` : '';
-  const stroke = it.kind === 'elv' ? '#8fd0ff' : 'var(--room-stroke)';
+  const stroke = it.kind === 'elv' ? '#2f7fb5' : 'var(--room-stroke)';
   let extra = '';
   if (it.kind === 'core') {
     const treads = 9;
     for (let k = 1; k < treads; k++) {
       const zy = y(it.z + it.w * k / treads);
-      extra += `<line x1="${it.x+0.12}" y1="${zy}" x2="${it.x+it.l-0.12}" y2="${zy}" stroke="#8a9aaa" stroke-width="0.04" pointer-events="none"/>`;
+      extra += `<line x1="${it.x+0.12}" y1="${zy}" x2="${it.x+it.l-0.12}" y2="${zy}" stroke="#7a8086" stroke-width="0.04" pointer-events="none"/>`;
     }
   }
   return `<g class="room" data-i="${i}">
-    <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="${fill}" stroke="${stroke}" stroke-width="0.07"/>
+    <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="${fill}" stroke="${stroke}" stroke-width="0.14"/>
     ${extra}${texts}${area}
   </g>`;
 }
@@ -471,26 +468,27 @@ function wrap(s, n) {
 
 function siteLayer(id) {
   let s = '';
-  s += `<rect x="-22" y="${y(W+18)}" width="80" height="50" fill="#1a221c"/>`;
+  s += `<rect x="-22" y="${y(W+18)}" width="80" height="50" fill="#6f9a3e"/>`;
   s += `<rect x="-18" y="${y(W+4)}" width="8" height="${W+8}" fill="url(#asphalt)"/>`;
-  s += `<rect x="-10.2" y="${y(W+4)}" width="0.35" height="${W+8}" fill="#9aa0a6"/>`;
-  s += `<line x1="-14.2" y1="${y(W+3)}" x2="-14.2" y2="${y(-3)}" stroke="#c8c234" stroke-width="0.08" stroke-dasharray="0.8 0.45"/>`;
+  s += `<rect x="-10.2" y="${y(W+4)}" width="0.35" height="${W+8}" fill="#d9dcdf"/>`;
+  s += `<line x1="-14.2" y1="${y(W+3)}" x2="-14.2" y2="${y(-3)}" stroke="#f0d000" stroke-width="0.1" stroke-dasharray="0.8 0.45"/>`;
   s += `<text class="lab muted" x="-16.3" y="${y(3.2)}" transform="rotate(-90 -16.3 ${y(3.2)})">RUA DESEMBARGADOR VIEIRA CAVALCANTI</text>`;
   const ez = RAMP_RUA.z + RAMP_RUA.w/2;
-  const showEntry = (id === 'ss1' || id === 'terreo');
+  const showEntry = (id === 'ss1');
   if (showEntry) s += `<polygon points="-10.35,${y(ez)} -12.2,${y(ez)-0.5} -12.2,${y(ez)+0.5}" fill="#f0d78a"/>`;
-  s += `<rect x="-8.8" y="${y(W+2.2)}" width="8.6" height="${W+4.4}" fill="#2a3828"/>`;
-  s += `<rect x="${L+0.2}" y="${y(W+2.2)}" width="4.2" height="${W+4.4}" fill="#2a3828"/>`;
-  s += `<rect x="-0.4" y="${y(-0.2)}" width="${L+0.8}" height="2.0" fill="#2a3828"/>`;
-  s += `<rect x="-0.4" y="${y(W+2.2)}" width="${L+0.8}" height="2.0" fill="#2a3828"/>`;
+  s += `<rect x="-9.85" y="${y(W+4)}" width="2.2" height="${W+8}" fill="#cfcac0"/>`;
+  s += `<rect x="-7.65" y="${y(W+2.2)}" width="7.45" height="${W+4.4}" fill="#7aa646"/>`;
+  s += `<rect x="${L+0.2}" y="${y(W+2.2)}" width="4.2" height="${W+4.4}" fill="#7aa646"/>`;
+  s += `<rect x="-0.4" y="${y(-0.2)}" width="${L+0.8}" height="2.0" fill="#7aa646"/>`;
+  s += `<rect x="-0.4" y="${y(W+2.2)}" width="${L+0.8}" height="2.0" fill="#7aa646"/>`;
   for (const [tx, tz, r] of [[-6.6, 3.4, 1.2], [-4.0, 14.4, 1.0], [-7.0, 15.8, 0.9], [-3.2, 5.1, 1.05]]) {
-    s += `<circle cx="${tx}" cy="${y(tz)}" r="${r}" fill="#3d5a38" stroke="#4a6e44" stroke-width="0.08"/>`;
+    s += `<circle cx="${tx}" cy="${y(tz)}" r="${r}" fill="#3f7a35" stroke="#2f5e28" stroke-width="0.1" opacity="0.95"/>`;
     s += `<circle cx="${tx}" cy="${y(tz)}" r="0.18" fill="#5a4030"/>`;
   }
   if (showEntry) {
-    s += `<rect x="-9.7" y="${y(ez)-2.05}" width="5.1" height="1.25" rx="0.12" fill="#161d25" stroke="#f0d78a" stroke-width="0.05"/>`;
-    s += `<text class="lab xs" x="-7.15" y="${y(ez)-1.58}" fill="#f0d78a">ENTRADA</text>`;
-    s += `<text class="lab xs" x="-7.15" y="${y(ez)-1.12}" fill="#f0d78a">DE VEÍCULOS</text>`;
+    s += `<rect x="-9.7" y="${y(ez)-2.05}" width="5.1" height="1.25" rx="0.12" fill="#1b2229" stroke="#3a4552" stroke-width="0.04"/>`;
+    s += `<text class="lab xs" x="-7.15" y="${y(ez)-1.58}" style="fill:#ffffff">ENTRADA</text>`;
+    s += `<text class="lab xs" x="-7.15" y="${y(ez)-1.12}" style="fill:#ffffff">DE VEÍCULOS</text>`;
   }
   return s;
 }
@@ -500,31 +498,31 @@ function northAndScale() {
   return `<g>
     <circle cx="${x}" cy="${y(z)}" r="0.7" fill="#161d25" stroke="#4ea3d9" stroke-width="0.06"/>
     <polygon points="${x},${y(z)-0.55} ${x-0.22},${y(z)+0.15} ${x+0.22},${y(z)+0.15}" fill="#4ea3d9"/>
-    <text class="lab xs" x="${x}" y="${y(z)-0.85}">N</text>
-    <rect x="0" y="${y(-1.5)}" width="5" height="0.12" fill="#e8eef4"/>
-    <rect x="0" y="${y(-1.38)}" width="0.08" height="0.3" fill="#e8eef4"/>
-    <rect x="5" y="${y(-1.38)}" width="0.08" height="0.3" fill="#e8eef4"/>
+    <text class="lab xs" x="${x}" y="${y(z)-0.85}" style="fill:#1f262d">N</text>
+    <rect x="0" y="${y(-1.5)}" width="5" height="0.12" fill="#1f262d"/>
+    <rect x="0" y="${y(-1.38)}" width="0.08" height="0.3" fill="#1f262d"/>
+    <rect x="5" y="${y(-1.38)}" width="0.08" height="0.3" fill="#1f262d"/>
     <text class="lab xs" x="2.5" y="${y(-2.05)}">5 m</text>
   </g>`;
 }
 
 function titleBlock(d) {
-  return `<text class="lab muted" x="${L/2}" y="${y(-2.4)}" font-size="0.42">${d.titulo}</text>`;
+  return `<text class="lab" x="${L/2}" y="${y(-2.4)}" font-size="0.42">${d.titulo}</text>`;
 }
 
 function drawFloor(id) {
   const d = DATA[id];
   let s = defs() + siteLayer(id);
-  s += `<rect x="0" y="${y(W)}" width="${L}" height="${W}" fill="#1c2228" stroke="#8a9aaa" stroke-width="0.18" filter="url(#slabSh)"/>`;
-  s += `<rect x="0.12" y="${y(W)-0.12}" width="${L-0.24}" height="${W-0.24}" fill="none" stroke="#3a4552" stroke-width="0.06"/>`;
+  s += `<rect x="0" y="${y(W)}" width="${L}" height="${W}" fill="#c3c6c8" stroke="#4a4f56" stroke-width="0.3" filter="url(#slabSh)"/>`;
+  s += `<rect x="0.12" y="${y(W)-0.12}" width="${L-0.24}" height="${W-0.24}" fill="none" stroke="#9a9ea2" stroke-width="0.05"/>`;
   if (d.slab) {
     const [x,z,l,w] = d.slab;
-    s += `<rect x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="#242b32" stroke="#6a7a88" stroke-width="0.1"/>`;
+    s += `<rect x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="#d6d8d9" stroke="#4a4f56" stroke-width="0.12"/>`;
   }
   if (d.patio) {
-    s += `<rect x="0.4" y="${y(5.6)}" width="5.4" height="4.0" fill="#3a3f46" stroke="#6a6e74" stroke-width="0.06"/>`;
-    s += `<rect x="0.4" y="${y(6.2)}" width="5.4" height="0.7" fill="#4e6a45"/>`;
-    s += `<rect x="0.4" y="${y(12.2)}" width="0.55" height="8.5" fill="#4e6a45"/>`;
+    s += `<rect x="0.4" y="${y(5.6)}" width="5.4" height="4.0" fill="#e2ddd2" stroke="#9a948a" stroke-width="0.06"/>`;
+    s += `<rect x="0.4" y="${y(6.2)}" width="5.4" height="0.7" fill="#7aa646"/>`;
+    s += `<rect x="0.4" y="${y(12.2)}" width="0.55" height="8.5" fill="#7aa646"/>`;
   }
   d.items.forEach((it, i) => {
     if (it.tipo === 'stall') s += drawStall(it, i);
@@ -532,16 +530,16 @@ function drawFloor(id) {
     else if (it.tipo === 'ramp') s += drawRamp(it, i);
     else if (it.tipo === 'terrazo') {
       s += `<g class="room" data-i="${i}">
-        <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="url(#terH)" stroke="#7a8b6a" stroke-width="0.08"/>
+        <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="url(#terH)" stroke="#5d6268" stroke-width="0.08"/>
       </g>`;
     } else if (it.tipo === 'tank') {
       s += `<circle cx="${it.cx}" cy="${y(it.cz)}" r="0.85" fill="#b7c4cc" stroke="#8aa0aa" stroke-width="0.08"/>`;
     } else if (it.tipo === 'label') {
-      s += `<text class="lab muted" x="${it.x}" y="${y(it.z)}">${it.text}</text>`;
+      s += `<text class="lab" x="${it.x}" y="${y(it.z)}" style="fill:#3a4148">${it.text}</text>`;
       if (it.sub) s += `<text class="lab xs" x="${it.x}" y="${y(it.z)+0.4}">${it.sub}</text>`;
     }
   });
-  s += `<rect x="${ELV.x0}" y="${y(ELV.z0+ELV.d)}" width="${ELV.w}" height="${ELV.d}" fill="none" stroke="#8fd0ff" stroke-width="0.08" pointer-events="none"/>`;
+  s += `<rect x="${ELV.x0}" y="${y(ELV.z0+ELV.d)}" width="${ELV.w}" height="${ELV.d}" fill="none" stroke="#2f7fb5" stroke-width="0.1" pointer-events="none"/>`;
   s += northAndScale();
   s += titleBlock(d);
   return s;
