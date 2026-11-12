@@ -8,6 +8,7 @@
   <!-- visual-v8-blender -->
   <!-- visual-v8b-paineis -->
   <!-- visual-v8c-celular -->
+  <!-- visual-v8d-camera -->
   <script type="importmap">
   { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
   </script>
@@ -54,6 +55,7 @@
     #loading .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
     #loading span { font-size: 13px; color: var(--muted); }
     #fade { position: absolute; inset: 0; background: #0b0f13; opacity: 0; pointer-events: none; z-index: 3; }
+    button.centro { background: #1d2f45; border-color: #3f6d99; color: #d6e9fb; }
     button.tour { background: #143a2c; border-color: #2f7a57; color: #bff0d6; }
     button.tour.on { background: #2f7a57; color: #fff; }
     body.touring .top, body.touring .hint { opacity: .25; transition: opacity .4s; }
@@ -120,6 +122,7 @@
     <input type="range" id="slider" min="0" max="1000" value="0" />
     <div class="ticks" id="ticks"></div>
     <div class="actions">
+      <button type="button" class="centro" id="btnCentro" title="Volta a vista para o centro">⟲ Recentralizar</button>
       <button type="button" id="btnInicio">Obra desmontada</button>
       <button type="button" class="hoje" id="btnHoje">Hoje (posição prevista)</button>
       <button type="button" id="btnFim">Obra montada</button>
@@ -132,7 +135,7 @@
       <button type="button" id="btnRotulos">Esconder nomes</button>
       <button type="button" id="btnSemUI">Esconder painéis</button>
     </div>
-    <div class="hint">Arraste a barra para montar ou desmontar. Gire o modelo e use a roda para aproximar. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
+    <div class="hint">Arraste a barra para montar ou desmontar. Gire com um dedo (ou botão esquerdo), arraste para os lados com dois dedos (ou botão direito), aproxime com pinça ou roda; dois toques num ponto aproximam dele e ⟲ Recentralizar volta a vista. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
   </div>
   <button type="button" id="btnUI">Mostrar painéis</button>
     <script type="module">
@@ -232,8 +235,26 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.06;
     controls.maxPolarAngle = Math.PI * 0.49;
-    controls.minDistance = 4;
-    controls.maxDistance = 130;
+    // visual-v8d-camera: câmera solta (arrastar para os lados, zoom perto, duplo toque centraliza)
+    controls.minDistance = 0.6;
+    controls.maxDistance = 170;
+    controls.zoomToCursor = true;
+    controls.screenSpacePanning = true;
+    controls.panSpeed = 1.1;
+    controls.zoomSpeed = 1.15;
+    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+    controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+    controls.listenToKeyEvents(window);
+    controls.keyPanSpeed = 14;
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    const LIM = { x0: -25, x1: 58, y0: -8, y1: 22, z0: -25, z1: 42 };
+    function limitaAlvo() {
+      const t = controls.target;
+      const cx = Math.min(LIM.x1, Math.max(LIM.x0, t.x)) - t.x;
+      const cy = Math.min(LIM.y1, Math.max(LIM.y0, t.y)) - t.y;
+      const cz = Math.min(LIM.z1, Math.max(LIM.z0, t.z)) - t.z;
+      if (cx || cy || cz) { t.x += cx; t.y += cy; t.z += cz; camera.position.x += cx; camera.position.y += cy; camera.position.z += cz; }
+    }
 
     // Luz: céu HDRI (Poly Haven, CC0) + sol com sombra suave (mesma direção do render do Blender)
     const SUN_DIR = new THREE.Vector3(-0.74, 0.59, 0.33).normalize();
@@ -641,6 +662,7 @@
       renderFrame();
       return true;
     };
+    window.__qaCamInfo = () => ({ pos: camera.position.toArray().map(v => +v.toFixed(2)), tgt: controls.target.toArray().map(v => +v.toFixed(2)), dist: +camera.position.distanceTo(controls.target).toFixed(2), fly: !!camFly });
     window.__qaHoje = () => {
       if (tour) stopTour();
       viewMode = 'obra'; markView(); camFly = null;
@@ -684,6 +706,52 @@
     document.getElementById('btnPav2').onclick = () => flyTo('pav2');
     document.getElementById('btnRampa').onclick = () => flyTo('rampa');
     btnTour.onclick = () => { if (tour) stopTour(); else startTour(); };
+    // Recentralizar: volta para a vista do modo atual sem mexer na data
+    function recentralizar() {
+      if (tour) stopTour();
+      const v = VIEWS[viewMode] || VIEWS.obra;
+      camFly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: v.pos.clone(), t1: v.tgt.clone(), k: 0 };
+    }
+    document.getElementById('btnCentro').onclick = recentralizar;
+    controls.addEventListener('start', () => { camFly = null; });
+    // duplo clique/duplo toque: aproxima e gira em volta do ponto tocado
+    const ray = new THREE.Raycaster(); ray.layers.set(0);
+    const ndc = new THREE.Vector2();
+    function visivel(o) { for (; o; o = o.parent) if (!o.visible) return false; return true; }
+    function focaPonto(cx, cy) {
+      if (tour) return;
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObjects(scene.children, true).find(h => h.object.isMesh && visivel(h.object));
+      window.__qaFoco = { n: (window.__qaFoco?.n || 0) + 1, hit: !!hit };
+      if (!hit) return;
+      const alvo = hit.point.clone();
+      const dir = camera.position.clone().sub(controls.target);
+      const dist = Math.max(3, Math.min(dir.length() * 0.45, 14));
+      dir.setLength(dist);
+      camFly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: alvo.clone().add(dir), t1: alvo, k: 0 };
+    }
+    canvas.addEventListener('dblclick', e => focaPonto(e.clientX, e.clientY));
+    // dois toques rápidos no celular (eventos de ponteiro, funcionam junto com a câmera)
+    let ultimoToque = 0, toqueX = 0, toqueY = 0, dedos = 0, baixoT = 0, baixoX = 0, baixoY = 0, multi = false;
+    canvas.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'touch') return;
+      dedos++; if (dedos > 1) multi = true;
+      if (dedos === 1) { multi = false; baixoT = performance.now(); baixoX = e.clientX; baixoY = e.clientY; }
+    });
+    const fimToque = e => {
+      if (e.pointerType !== 'touch') return;
+      dedos = Math.max(0, dedos - 1);
+      if (dedos > 0) return;
+      const agora = performance.now();
+      const toqueCurto = !multi && agora - baixoT < 280 && Math.hypot(e.clientX - baixoX, e.clientY - baixoY) < 12;
+      if (!toqueCurto) { ultimoToque = 0; return; }
+      if (agora - ultimoToque < 380 && Math.hypot(e.clientX - toqueX, e.clientY - toqueY) < 35) { focaPonto(e.clientX, e.clientY); ultimoToque = 0; }
+      else { ultimoToque = agora; toqueX = e.clientX; toqueY = e.clientY; }
+    };
+    canvas.addEventListener('pointerup', fimToque);
+    canvas.addEventListener('pointercancel', e => { if (e.pointerType === 'touch') { dedos = Math.max(0, dedos - 1); ultimoToque = 0; } });
 
     function resize() {
       camera.aspect = innerWidth / innerHeight;
@@ -723,13 +791,15 @@
       if (tour) updateTour(ts);
       else {
         if (camFly) {
-          camFly.k = Math.min(1, camFly.k + dt / 1.15);
+          if (camFly.s == null) camFly.s = ts;
+          camFly.k = Math.min(1, (ts - camFly.s) / 1150);
           const e = 1 - Math.pow(1 - camFly.k, 3);
           camera.position.lerpVectors(camFly.p0, camFly.p1, e);
           controls.target.lerpVectors(camFly.t0, camFly.t1, e);
           if (camFly.k >= 1) camFly = null;
         }
         controls.update();
+        limitaAlvo();
       }
       renderFrame();
     }
