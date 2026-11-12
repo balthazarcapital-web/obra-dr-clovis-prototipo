@@ -2,324 +2,355 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Obra Dr. Clóvis — planta 2D</title>
   <style>
     :root {
       --bg: #0f1419; --panel: #161d25f2; --line: #2a3542; --text: #e8eef4;
-      --muted: #9aa8b6; --done: #3dba7a; --todo: #7a8b9c; --today: #f0b429; --accent: #4ea3d9;
+      --muted: #9aa8b6; --today: #f0b429; --accent: #4ea3d9;
       --room: #eeede9; --room-stroke: #4a4f56; --room-consult: #f4efe6;
       --room-wet: #e3ecf1; --room-circ: #dcdad4; --room-wait: #eef2ea;
-      --core: #c9ccce; --elv: #bfe1f5; --ramp: #c4a35a; --grass: #6f9a3e;
-      --street: #3d4044; --stall: #b4b8bb; --pcd: #2c6aa0; --idoso: #b0832c; --moto: #a5a9ac;
+      --core: #c9ccce; --elv: #bfe1f5; --stall: #b4b8bb; --pcd: #2c6aa0; --idoso: #b0832c; --moto: #a5a9ac;
     }
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: "Segoe UI", system-ui, sans-serif; overflow: hidden; }
-    #stage { position: absolute; inset: 0; cursor: grab; }
+    #stage { position: absolute; inset: 0; cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
     #stage.drag { cursor: grabbing; }
     svg { display: block; width: 100%; height: 100%; }
     .ui { position: absolute; pointer-events: none; inset: 0; }
     .ui > * { pointer-events: auto; }
-    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; backdrop-filter: blur(8px); box-shadow: 0 8px 28px #0006; }
+    .ui { overflow: hidden; }
+    .sh { display: none; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px 14px; backdrop-filter: blur(8px); box-shadow: 0 8px 28px #0006; }
+    .card.min { padding: 7px 14px; border-radius: 999px; }
+    .card.min .body { display: none; }
+    .hdr { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; background: none; border: 0; padding: 0; color: var(--text); font-family: inherit; cursor: pointer; text-align: left; }
+    .hdr:hover { border: 0; }
+    .hdr .car { font-size: 13px; color: var(--accent); }
     .top { position: absolute; left: 16px; top: 16px; max-width: 540px; }
-    h1 { margin: 0; font-size: 18px; font-weight: 650; letter-spacing: .01em; }
-    .sub { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.4; }
+    .top .hdr .t { font-size: 17px; font-weight: 650; letter-spacing: .01em; }
+    .card.min .hdr .t { font-size: 13px; }
+    .sub { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.4; }
     .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
     .sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
-    .info { position: absolute; right: 16px; top: 16px; width: 240px; }
-    .info h2 { margin: 0 0 8px; font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .08em; }
+    .info { position: absolute; right: 16px; top: 16px; width: 260px; }
+    .info.min { width: auto; }
+    .info .hdr .t { font-size: 11px; color: var(--muted); font-weight: 650; text-transform: uppercase; letter-spacing: .08em; }
+    .info .body { margin-top: 8px; }
     .info .nome { font-size: 16px; font-weight: 650; margin: 0 0 4px; }
     .info .meta { font-size: 12px; color: var(--muted); line-height: 1.45; }
     .info .empty { font-size: 12px; color: var(--muted); line-height: 1.45; }
     .bottom { position: absolute; left: 16px; right: 16px; bottom: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 18px 14px; box-shadow: 0 8px 28px #0006; }
     .bottom-row { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
-    .floors { display: flex; gap: 8px; flex-wrap: wrap; }
+    .floors { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .floors .sep { width: 1px; height: 22px; background: var(--line); margin: 0 2px; }
     .fluxo-inline { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 340px; justify-content: flex-end; flex-wrap: wrap; }
     .fluxo-k { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; margin-right: 2px; }
     .fluxo-pill { background: #22303c; border: 1px solid var(--line); border-radius: 8px; padding: 6px 11px; font-size: 11px; font-weight: 650; color: var(--text); }
     .fluxo-pill.on { background: #1a3a4e; border-color: var(--accent); color: #cfe8f6; }
     .fluxo-arr { color: #e8d29a; font-size: 10px; font-weight: 650; display: flex; flex-direction: column; align-items: center; line-height: 1.15; min-width: 88px; text-align: center; }
     .fluxo-arr span { color: #9aa8b6; font-size: 9px; font-weight: 600; }
-    button { background: #22303c; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 13px; font-size: 12px; cursor: pointer; font-family: inherit; }
+    button { background: #22303c; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 7px 13px; font-size: 12px; cursor: pointer; font-family: inherit; white-space: nowrap; }
     button:hover { border-color: var(--accent); }
     button.on { background: #1a3a4e; border-color: var(--accent); color: #cfe8f6; }
+    #btnFluxo { display: none; }
     .hint { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.4; }
+    .zoomctl { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 6px; }
+    .zoomctl button { background: var(--panel); min-width: 40px; padding: 7px 10px; font-size: 15px; font-weight: 650; box-shadow: 0 4px 14px #0005; }
+    .zoomctl button.txt { font-size: 11px; font-weight: 600; }
+    #btnUI { position: absolute; right: 16px; bottom: 16px; display: none; background: var(--panel); padding: 8px 14px; font-size: 13px; }
+    body.semui .top, body.semui .info, body.semui .bottom { display: none; }
+    body.semui #btnUI { display: block; }
     .room { cursor: pointer; }
     .room:hover .fill { filter: brightness(0.93); }
     .room.on .fill { stroke: var(--today); stroke-width: 0.16; filter: brightness(0.95); }
     .lab { font-size: 0.38px; font-family: "Segoe UI", system-ui, sans-serif; fill: #1f262d; text-anchor: middle; pointer-events: none; font-weight: 650; }
     .lab.sm { font-size: 0.30px; font-weight: 600; }
-    .lab.xs { font-size: 0.26px; fill: #4a535c; font-weight: 600; }
+    .lab.xs { font-size: 0.24px; fill: #4a535c; font-weight: 600; }
     .lab.muted { fill: #e8eef4; font-weight: 600; }
-    .area { font-size: 0.26px; fill: #6a737c; text-anchor: middle; pointer-events: none; }
+    .area { font-size: 0.24px; fill: #6a737c; text-anchor: middle; pointer-events: none; }
+    @media (max-width: 700px) {
+      .top { left: 8px; top: 8px; max-width: calc(100vw - 16px); }
+      .top .hdr .t { font-size: 14px; }
+      .card.min { padding: 6px 11px; }
+      .card.min .hdr .t { font-size: 12px; }
+      .info { right: 8px; top: 8px; }
+      .info:not(.min) { left: 8px; right: 8px; top: 54px; width: auto; }
+      .bottom { left: 8px; right: 8px; bottom: 8px; padding: 7px 8px; border-radius: 12px; }
+      .bottom-row { flex-direction: column; align-items: stretch; gap: 6px; }
+      .floors { flex-wrap: nowrap; overflow-x: auto; gap: 6px; padding-bottom: 2px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+      .floors::-webkit-scrollbar { display: none; }
+      .floors button { padding: 6px 10px; font-size: 12px; flex: 0 0 auto; }
+      #btnFluxo { display: inline-block; }
+      .floors .lg { display: none; }
+      .floors .sh { display: inline; }
+      .fluxo-inline { display: none; min-width: 0; justify-content: flex-start; gap: 5px; }
+      .bottom.fluxo-on .fluxo-inline { display: flex; }
+      .fluxo-pill { padding: 4px 8px; font-size: 10px; }
+      .fluxo-arr { min-width: 70px; font-size: 9px; }
+      .fluxo-k { display: none; }
+      .hint { display: none; }
+      .zoomctl { right: 8px; top: auto; bottom: 120px; transform: none; }
+      .zoomctl button { min-width: 38px; padding: 6px 8px; }
+      #btnUI { right: 8px; bottom: 8px; }
+    }
   </style>
 </head>
 <body>
   <div id="stage"></div>
   <div class="ui">
-    <div class="card top">
-      <h1>Obra Dr. Clóvis — planta 2D</h1>
-      <div class="sub">Absolutta Engenharia. Ambientes, vagas, rampa, escada e elevador lidos na planta 01_ARQ_EX_LAY_R02. Use os botões para trocar de pavimento.</div>
-      <div class="legend">
-        <span><i class="sw" style="background:#b4b8bb"></i>Vaga normal</span>
-        <span><i class="sw" style="background:#2c6aa0"></i>PCD</span>
-        <span><i class="sw" style="background:#b0832c"></i>Idoso</span>
-        <span><i class="sw" style="background:#a5a9ac"></i>Moto</span>
-        <span><i class="sw" style="background:#c4a35a"></i>Rampa</span>
-        <span><i class="sw" style="background:#7ec8ff"></i>Elevador</span>
-        <span><i class="sw" style="background:#eeede9;outline:1px solid #555"></i>Ambiente</span>
+    <div class="card top min" id="cardTop">
+      <button type="button" class="hdr" data-card="cardTop" aria-expanded="false"><span class="t">Obra Dr. Clóvis — planta 2D</span><span class="car">▸</span></button>
+      <div class="body">
+        <div class="sub">Absolutta Engenharia. Ambientes, áreas, vagas, rampas, escada e elevador conferidos andar por andar na planta 01_ARQ_EX_LAY_R02 (revisão de 12/11/2026). Posições com precisão aproximada de 20 cm. Use os botões para trocar de pavimento.</div>
+        <div class="legend">
+          <span><i class="sw" style="background:#b4b8bb"></i>Vaga normal</span>
+          <span><i class="sw" style="background:#2c6aa0"></i>PCD</span>
+          <span><i class="sw" style="background:#b0832c"></i>Idoso</span>
+          <span><i class="sw" style="background:#a5a9ac"></i>Moto</span>
+          <span><i class="sw" style="background:#9da2a6"></i>Rampa</span>
+          <span><i class="sw" style="background:#bfe1f5"></i>Elevador</span>
+          <span><i class="sw" style="background:#eeede9;outline:1px solid #555"></i>Ambiente</span>
+          <span><i class="sw" style="background:#c9b48f"></i>Terreno não escavado</span>
+        </div>
       </div>
     </div>
-    <div class="card info" id="ficha">
-      <h2>Ambiente</h2>
-      <div class="empty">Clique num cômodo, vaga ou na rampa para ver o nome e o detalhe da planta.</div>
+    <div class="card info min" id="ficha">
+      <button type="button" class="hdr" data-card="ficha" aria-expanded="false"><span class="t" id="fichaT">Ambiente</span><span class="car">▸</span></button>
+      <div class="body" id="fichaBody"><div class="empty">Clique num cômodo, vaga ou rampa para ver o nome e o detalhe da planta.</div></div>
     </div>
-    <div class="bottom">
+    <div class="zoomctl">
+      <button type="button" id="zIn" title="Aproximar">+</button>
+      <button type="button" id="zOut" title="Afastar">−</button>
+      <button type="button" class="txt" id="zFit" title="Voltar à vista inicial">Centralizar</button>
+    </div>
+    <div class="bottom" id="bottom">
       <div class="bottom-row">
         <div class="floors" id="btns"></div>
         <div class="fluxo-inline" id="fluxo"></div>
       </div>
-      <div class="hint">Arraste para mover e use a roda para aproximar. Norte para cima; a rua fica à esquerda. Não publicado no Dash.</div>
+      <div class="hint">Arraste para mover a planta e use a roda do mouse (ou dois dedos no celular) para aproximar no ponto desejado. Norte para cima; a rua fica à esquerda. Não publicado no Dash.</div>
     </div>
+    <button type="button" id="btnUI">Mostrar painéis</button>
   </div>
 <script>
+// Revisão pente fino (12/11/2026) contra 01_ARQ_EX_LAY_R02. Coordenadas em metros:
+// x = da face interna da parede da rua (oeste) para o fundo; z = de sul para norte.
 const L = 32.75, W = 17.28;
-const CORE = { x: 16.64, z: 0.28, l: 4.00, w: 4.30 };
-const ELV = { w: 1.70, d: 1.80 };
-ELV.x0 = CORE.x + CORE.l - ELV.w;
-ELV.z0 = CORE.z;
-const SW = 2.32, stallLen = 5.0, sulZ = 2.70, nZ = W - 2.70;
-const clinX0 = 12.2;
+const ESC = { x0: 17.90, x1: 20.55 };            // escada (cotas 265 entre paredes de 15)
+const ELV = { x0: 20.70, x1: 22.20, z0: 0.20, z1: 1.80 }; // elevador 1,50 × 1,60 = 2,40 m²
+const MOTO_X = [14.12, 15.20, 16.24, 17.30, 17.62, 18.66, 19.70, 20.75, 21.80, 22.83, 23.87, 24.93, 25.27, 26.47, 27.72];
 
 const FLOORS = [
-  { id: 'ss2', nome: 'Subsolo 2' },
-  { id: 'ss1', nome: 'Subsolo 1' },
-  { id: 'terreo', nome: 'Térreo' },
-  { id: 'pav2', nome: '2º pavimento' },
-  { id: 'caixa', nome: "Caixa d'água" }
+  { id: 'ss2', nome: 'Subsolo 2', curto: 'SS2' },
+  { id: 'ss1', nome: 'Subsolo 1', curto: 'SS1' },
+  { id: 'terreo', nome: 'Térreo', curto: 'Térreo' },
+  { id: 'pav2', nome: '2º pavimento', curto: '2º pav.' },
+  { id: 'caixa', nome: "Caixa d'água", curto: 'Caixa' }
 ];
 
-function stallDef(x, z, l, w, num, kind, rot) {
-  return { tipo: 'stall', x, z, l, w, num, kind, rot: rot || 0 };
+function st(x0, x1, z0, z1, num, kind) { return { tipo: 'stall', x: x0, z: z0, l: x1 - x0, w: z1 - z0, num, kind: kind || 'NORMAL' }; }
+function rm(id, nome, x0, x1, z0, z1, kind, area, o) {
+  return Object.assign({ tipo: 'room', id, nome, x: x0, z: z0, l: x1 - x0, w: z1 - z0, kind: kind || 'room', area }, o || {});
 }
-function room(id, nome, x, z, l, w, kind, area) {
-  return { tipo: 'room', id, nome, x, z, l, w, kind: kind || 'room', area };
-}
-
-function stallsSS2() {
-  const out = [];
-  for (let i = 0; i < 7; i++) out.push(stallDef(0.40 + i*SW, sulZ - stallLen/2, SW, stallLen, 11 - i, 'NORMAL'));
-  out.push(stallDef(CORE.x + CORE.l, sulZ - stallLen/2, 2.40, stallLen, null, 'IDOSO'));
-  for (let i = 0; i < 4; i++) out.push(stallDef(CORE.x + CORE.l + 2.40 + i*SW, sulZ - stallLen/2, SW, stallLen, 4 - i, 'NORMAL'));
-  out.push(stallDef(0.50, nZ - stallLen/2, 2.50, stallLen, 12, 'PCD'));
-  out.push(stallDef(0.50 + 2.50 + 1.20, nZ - stallLen/2, SW, stallLen, 13, 'NORMAL'));
-  out.push(stallDef(0.50 + 2.50 + 1.20 + SW, nZ - stallLen/2, SW, stallLen, 14, 'NORMAL'));
-  for (let i = 0; i < 12; i++) out.push(stallDef(11.8 + i*1.12, 9.70, 1.10, 2.20, i + 1, 'MOTO'));
-  out.push(stallDef(L - 0.40 - 2*SW, nZ - stallLen/2, SW, stallLen, 15, 'NORMAL'));
-  out.push(stallDef(L - 0.40 - SW, nZ - stallLen/2, SW, stallLen, 16, 'NORMAL'));
+function faixa(x0, x1, z0, z1) { return { tipo: 'faixa', x: x0, z: z0, l: x1 - x0, w: z1 - z0, nome: 'Faixa de circulação da vaga PCD', desc: 'Área hachurada ao lado da vaga PCD, para embarque e desembarque. Não é vaga.' }; }
+function motos(z0, z1) {
+  const out = []; let k = 0;
+  for (let i = 0; i < MOTO_X.length - 1; i++) {
+    const a = MOTO_X[i], b = MOTO_X[i + 1];
+    if (b - a < 0.6) continue; // pilar entre as vagas 3/4 e 10/11
+    out.push(st(a, b, z0, z1, ++k, 'MOTO'));
+  }
   return out;
 }
-function stallsSS1() {
-  const out = [];
-  out.push(stallDef(0.50, nZ - stallLen/2, SW, stallLen, 17, 'NORMAL'));
-  out.push(stallDef(0.50 + SW, nZ - stallLen/2, SW, stallLen, 18, 'NORMAL'));
-  out.push(stallDef(0.50 + 2*SW, nZ - stallLen/2, SW, stallLen, 19, 'NORMAL'));
-  for (let i = 0; i < 12; i++) out.push(stallDef(11.8 + i*1.12, 9.70, 1.10, 2.20, i + 1, 'MOTO'));
-  out.push(stallDef(0.40, sulZ - stallLen/2, SW, stallLen, 20, 'NORMAL'));
-  out.push(stallDef(0.40 + SW, sulZ - stallLen/2, SW, stallLen, 21, 'NORMAL'));
-  out.push(stallDef(0.40 + 2*SW, sulZ - stallLen/2, 2.50, stallLen, 22, 'PCD'));
-  out.push(stallDef(CORE.x + CORE.l, sulZ - stallLen/2, 2.40, stallLen, null, 'IDOSO'));
-  out.push(stallDef(CORE.x + CORE.l + 2.40, sulZ - stallLen/2, SW, stallLen, 23, 'NORMAL'));
-  out.push(stallDef(CORE.x + CORE.l + 2.40 + SW, sulZ - stallLen/2, SW, stallLen, 24, 'NORMAL'));
-  out.push(stallDef(CORE.x + CORE.l + 2.40 + 2*SW, sulZ - stallLen/2, 2.50, stallLen, 25, 'PCD'));
-  return out;
+function core(pav, escZ1, escArea) {
+  return [
+    rm('escada-' + pav, 'Escada', ESC.x0, ESC.x1, 0, escZ1, 'core', escArea),
+    rm('elv-' + pav, 'Elevador', ELV.x0, ELV.x1, ELV.z0, ELV.z1, 'elv', '2,40 m²')
+  ];
 }
 
-const RAMP_INT = { x: 9.15, z: 12.50, l: 13.65, w: 4.20 };
-const RAMP_RUA = { x: -0.15, z: 7.40, l: 3.67, w: 5.00 };
-
+const RAMP_INT = { x: 14.10, z: 12.45, l: 13.65, w: 4.83 };
+const RAMP_RUA = { x: 2.70, z: 5.00, l: 4.23, w: 5.00 };
 function rampInt(pav) {
   const sobe = pav === 'ss2';
   return {
-    tipo: 'ramp', role: 'interna',
-    ...RAMP_INT,
-    dir: sobe ? 1 : -1,
-    verb: sobe ? 'SOBE' : 'DESCE',
-    from: sobe ? 'Subsolo 2' : 'Subsolo 1',
-    to: sobe ? 'Subsolo 1' : 'Subsolo 2',
-    nome: 'Rampa interna',
-    area: 'Extensão 13,65 m · inclinação 19,05%',
+    tipo: 'ramp', role: 'interna', ...RAMP_INT,
+    dir: sobe ? 1 : -1, verb: sobe ? 'SOBE' : 'DESCE',
+    nome: 'Rampa interna (norte)',
+    area: 'Extensão 13,65 m · inclinação 19,05% · muretas de alvenaria h = 1,30 m',
     desc: sobe
-      ? 'Neste pavimento a rampa sobe para o Subsolo 1. Ela não dá na rua: o acesso da rua fica no Subsolo 1, pelo portão a oeste.'
-      : 'Neste pavimento a rampa desce para o Subsolo 2, no lado norte, entre as muretas de 1,30 m.'
+      ? 'No Subsolo 2 a rampa começa no lado oeste e sobe para leste até o Subsolo 1. Não há saída para a rua neste pavimento. As 12 vagas de moto ficam ao sul da mureta, fora da rampa.'
+      : 'No Subsolo 1 a rampa começa no lado leste e desce para oeste até o Subsolo 2. As vagas 17 a 19 ficam a oeste da mureta e as motos ao sul, fora da rampa.'
   };
 }
 function rampRua() {
   return {
-    tipo: 'ramp', role: 'acesso',
-    ...RAMP_RUA,
-    dir: 1,
-    verb: 'DESCE',
-    from: 'Rua',
-    to: 'Subsolo 1',
-    nome: 'Rampa de acesso da rua',
-    area: 'Extensão 3,67 m · inclinação 13,61% · portão de rolo 5,00 × 2,44 m',
-    desc: 'Esta é a entrada de veículos. O carro entra pela Rua Desembargador Vieira Cavalcanti, passa no portão de rolo e chega no Subsolo 1, onde pode estacionar. Para ir ao Subsolo 2, usa a rampa norte, que é outra rampa.'
+    tipo: 'ramp', role: 'acesso', ...RAMP_RUA, dir: 1, verb: 'DESCE',
+    nome: 'Rampa de acesso de veículos',
+    area: 'Último lance: 3,87 m (387,49 cm) · inclinação 19,61% · portão de rolo 5,00 × 2,40 m',
+    desc: 'É a entrada de veículos. Pela implantação, o carro sai da Rua Desembargador Vieira Cavalcanti, desce um 1º lance (3,96 m, 19,17%) até o patamar no nível −0,36 e este 2º lance até o portão de rolo, chegando no Subsolo 1 (nível −1,12). Para ir ao Subsolo 2 usa-se a rampa norte, que é outra.'
   };
-}
-function rampBoca() {
-  return {
-    tipo: 'ramp', role: 'boca',
-    ...RAMP_RUA,
-    dir: 1,
-    verb: 'DESCE',
-    from: 'Rua',
-    to: 'Subsolo 1',
-    nome: 'Acesso de veículos ao subsolo',
-    area: 'Boca da rampa no térreo, lado oeste, junto à rua',
-    desc: 'Aqui o carro deixa o térreo e desce até o Subsolo 1 — esta é a entrada. Não segue direto ao Subsolo 2. A rampa que liga os dois subsolos é outra, no lado norte, só no SS1 e no SS2.'
-  };
-}
-
-function coreRooms(pav) {
-  return [
-    room('escada-'+pav, 'Escada', CORE.x, CORE.z, CORE.l - ELV.w, CORE.w, 'core'),
-    room('elv-'+pav, 'Elevador', ELV.x0, ELV.z0, ELV.w, ELV.d, 'elv', '2,40 m²')
-  ];
 }
 
 const DATA = {
   ss2: {
     titulo: 'Subsolo 2 — estacionamento coberto',
-    nota: '551,86 m² na planta. Não há entrada da rua neste pavimento: chega-se pela rampa norte, que sobe para o Subsolo 1. As vagas ficam ao lado da rampa, não sobre ela.',
-    slab: [0, 0, L, W],
+    slabs: [[0, L, 0, W]],
     items: [
-      ...stallsSS2(),
-      ...coreRooms('ss2'),
+      st(0.00, 2.59, 0.05, 5.0, 11), st(2.59, 5.28, 0.05, 5.0, 10), st(5.28, 7.90, 0.05, 5.0, 9), st(7.90, 10.35, 0.05, 5.0, 8),
+      st(10.35, 12.92, 0.05, 5.0, 7), st(12.92, 15.33, 0.05, 5.0, 6), st(15.33, 17.75, 0.05, 5.0, 5),
+      st(22.35, 25.02, 0.05, 5.0, 4, 'IDOSO'), st(25.02, 27.70, 0.05, 5.0, 3), st(27.70, 30.20, 0.05, 5.0, 2), st(30.20, 32.75, 0.05, 5.0, 1),
+      st(0.00, 2.45, 12.28, 17.23, 12, 'PCD'), faixa(2.45, 3.55, 12.28, 17.23), st(3.55, 6.00, 12.28, 17.23, 13), st(6.00, 8.60, 12.28, 17.23, 14),
+      st(27.75, 30.23, 12.28, 17.23, 15), st(30.23, 32.75, 12.28, 17.23, 16),
+      ...motos(10.30, 12.25),
+      ...core('ss2', 3.74, '9,88 m²'),
       rampInt('ss2'),
-      { tipo: 'label', x: L/2, z: 8.4, text: 'ESTACIONAMENTO COBERTO', sub: 'SUBSOLO 2' }
+      { tipo: 'label', x: 8.6, z: 8.2, text: 'ESTACIONAMENTO COBERTO', sub: 'SUBSOLO 2 · 551,66 m² · PD 2,80 m' }
     ]
   },
   ss1: {
     titulo: 'Subsolo 1 — estacionamento coberto',
-    nota: 'A entrada de veículos é neste pavimento: a rampa a oeste desce da rua e chega no Subsolo 1. Quem quiser ir ao Subsolo 2 usa a outra rampa, no lado norte.',
-    slab: [0, 0, L, W],
+    slabs: [[6.93, L, 0, W]],
+    solo: [[0, 6.93, 0, 5.0], [0, 6.93, 10.0, W]],
+    acesso: true,
     items: [
-      ...stallsSS1(),
-      ...coreRooms('ss1'),
-      room('gerador', 'Gerador', 0.35, 0.35, 2.4, 2.3, 'room', '5,47 m²'),
+      st(6.93, 9.28, 12.40, 17.23, 17), st(9.28, 11.75, 12.40, 17.23, 18), st(11.75, 14.10, 12.40, 17.23, 19),
+      st(6.93, 9.54, 0.05, 5.0, 20),
+      rm('gerador', 'Gerador', 9.69, 11.80, 0.05, 4.50, 'room', '9,47 m²', { desc: 'Sala do gerador, com porta P05 ao norte. A planta pede isolamento acústico.' }),
+      st(11.95, 14.30, 0.05, 5.0, 21), st(14.30, 16.74, 0.05, 5.0, 22, 'PCD'), faixa(16.74, 17.75, 0.05, 5.0),
+      st(22.35, 25.04, 0.05, 5.0, 23, 'IDOSO'), st(25.04, 27.90, 0.05, 5.0, 24), st(27.90, 31.50, 0.05, 5.0, 25, 'PCD'), faixa(31.50, 32.75, 0.05, 5.0),
+      ...motos(10.15, 12.15),
+      ...core('ss1', 4.15, '10,47 m²'),
       rampInt('ss1'),
       rampRua(),
-      { tipo: 'label', x: L/2, z: 8.4, text: 'ESTACIONAMENTO COBERTO', sub: 'SUBSOLO 1' }
+      { tipo: 'label', x: 19.6, z: 7.9, text: 'ESTACIONAMENTO COBERTO', sub: 'SUBSOLO 1 · 364,09 m² · nível −1,12' }
     ]
   },
   terreo: {
-    titulo: 'Térreo — clínica e acesso',
-    nota: 'A rampa de veículos desce da rua, a oeste, direto ao Subsolo 1 (veja o Subsolo 1). Recepção na entrada sul da clínica.',
-    slab: [clinX0, 0.2, L - clinX0, W - 0.4],
-    patio: true,
+    titulo: 'Térreo — clínica, pátio e estacionamento descoberto',
+    externo: [-0.4, L + 0.2, -1.3, 18.3],
+    poly: [[14.45, 0], [32.60, 0], [32.60, 16.87], [17.70, 16.87], [17.70, 7.90], [14.45, 7.90]],
     items: [
-      stallDef(3.80, 4.90, 2.50, 5.00, 27, 'NORMAL'),
-      stallDef(6.40, 4.90, 2.50, 5.00, 26, 'NORMAL'),
-      stallDef(6.10, 12.50, 5.00, 2.50, 28, 'NORMAL', 1),
-      stallDef(6.10, 9.90, 5.00, 2.50, 29, 'NORMAL', 1),
-      room('recepcao', 'Recepção / espera', 12.35, 0.35, 4.15, 7.70, 'wait', '22,66 m²'),
-      room('floreira', 'Floreira', 12.45, 0.40, 1.70, 0.70, 'circ'),
-      ...coreRooms('terreo'),
-      room('is-pcd', 'I.S. PCD (pacientes)', 20.80, 0.35, 2.10, 3.45, 'wet', '3,48 m²'),
-      room('isf-pac', 'I.S. feminino (pacientes)', 23.00, 0.35, 1.90, 3.45, 'wet'),
-      room('ism-pac', 'I.S. masculino (pacientes)', 25.00, 0.35, 1.90, 3.45, 'wet', '8,81 m²'),
-      room('infusao', 'Infusão', 27.05, 0.35, 2.55, 3.45, 'consult', '9,80 m²'),
-      room('c05', 'Consultório indiferenciado 05', 29.75, 0.35, 2.75, 5.15, 'consult', '10,78 m²'),
-      room('util', 'Sala de utilidades', 29.75, 5.60, 2.75, 3.05, 'room'),
-      room('c04', 'Consultório indiferenciado 04', 29.75, 8.75, 2.75, 3.45, 'consult', '11,68 m²'),
-      room('is-leste', 'I.S.', 29.75, 12.30, 2.75, 1.50, 'wet', '4,20 m²'),
-      room('tj', 'Copa / TJ', 20.80, 4.95, 2.00, 2.85, 'room', '2,70 m²'),
-      room('sfunc', 'Sanitário de funcionários', 22.90, 4.95, 4.00, 2.85, 'wet'),
-      room('resid', 'Sala de resíduos', 12.35, 8.15, 1.85, 4.30, 'room'),
-      room('ergo', 'Teste ergométrico', 14.30, 8.15, 3.55, 4.30, 'consult', '12,00 m²'),
-      room('vest', 'Vestiário', 17.95, 8.15, 2.00, 2.40, 'wet', '2,85 m²'),
-      room('us', 'Ultrassonografia', 20.05, 8.15, 2.85, 4.30, 'consult'),
-      room('proc', 'Sala de procedimentos', 23.00, 8.15, 3.55, 4.30, 'consult', '11,62 m²'),
-      room('circ', 'Circulação', 12.35, 12.55, 17.30, 1.25, 'circ', '34,78 m²'),
-      room('c01', 'Consultório indiferenciado 01', 12.35, 13.90, 3.41, 3.10, 'consult', '11,15 m²'),
-      room('c02', 'Consultório indiferenciado 02', 15.86, 13.90, 3.40, 3.10, 'consult', '11,16 m²'),
-      room('c03', 'Consultório indiferenciado 03', 19.36, 13.90, 3.40, 3.10, 'consult', '11,16 m²'),
-      room('uro', 'Consultório de urologia / ginecologia', 22.86, 13.90, 4.40, 3.10, 'consult', '13,48 m²'),
-      { tipo: 'label', x: 3.6, z: 3.2, text: 'PÁTIO DESCOBERTO', sub: '' }
+      { tipo: 'patio', nome: 'Pátio descoberto', area: '39,25 m²', x: 7.30, z: 0.45, l: 7.15, w: 6.15, lx: 10.6, lz: 3.4, desc: 'Pátio com bancos, entre a floreira e a fachada da recepção.' },
+      { tipo: 'patio', nome: 'Rampa de pedestres', area: 'Extensão 8,40 m · inclinação 7,98%', x: 2.90, z: -1.15, l: 8.40, w: 1.60, lx: 7.1, lz: -0.55, txt: 'RAMPA DE PEDESTRES · 7,98%', desc: 'Rampa de pedestres junto à divisa sul, até o pátio. O início exato fica fora da folha do térreo.' },
+      { tipo: 'floreira', nome: 'Floreira em alvenaria', x: 6.80, z: 0.90, l: 0.50, w: 12.50 },
+      { tipo: 'floreira', nome: 'Floreira em alvenaria', x: 7.40, z: 6.60, l: 4.70, w: 0.70 },
+      st(7.30, 9.70, 7.30, 11.80, 27), st(9.70, 12.16, 7.30, 11.80, 26),
+      st(12.70, 17.70, 15.83, 18.20, 28), st(12.70, 17.70, 13.43, 15.83, 29),
+      rm('grb', 'Abrigo de resíduos grupo B', 16.20, 17.60, 9.45, 10.75, 'room', '1,80 m²', { curto: 'Resíd. B' }),
+      rm('grae', 'Abrigo de resíduos grupos A/E', 16.20, 17.60, 8.00, 9.35, 'room', '1,63 m²', { curto: 'Resíd. A/E' }),
+      rm('espera1', 'Espera', 14.45, 17.75, 0.05, 4.10, 'wait', '13,16 m²'),
+      rm('recepcao', 'Recepção / espera', 14.45, 17.75, 4.10, 7.85, 'wait', '32,66 m²', { parts: [[17.75, 22.35, 4.10, 5.60]], desc: 'Inclui o hall em frente à escada e ao elevador (nível +1,48).' }),
+      rm('espera2', 'Espera', 17.75, 23.55, 5.60, 7.85, 'wait', '11,00 m²', { desc: 'Com banco e floreira no lado leste.' }),
+      ...core('terreo', 4.11, '10,90 m²'),
+      rm('is-pcd', 'I.S. PCD pacientes', 22.35, 24.45, 0.05, 4.10, 'wet', '3,46 m²', { curto: 'I.S. PCD' }),
+      rm('isf-pac', 'I.S. feminino pacientes', 24.55, 26.45, 0.05, 4.20, 'wet', '6,45 m²', { curto: 'I.S.F. pac.' }),
+      rm('ism-pac', 'I.S. masculino pacientes', 26.55, 28.45, 0.05, 4.20, 'wet', '6,81 m²', { curto: 'I.S.M. pac.' }),
+      rm('infusao', 'Infusão', 28.55, 30.65, 0.05, 3.10, 'consult', '6,89 m²'),
+      rm('c05', 'Consultório indiferenciado 05', 30.75, 32.60, 0.05, 3.15, 'consult', '10,78 m²', { parts: [[29.65, 32.60, 3.15, 5.35]], lx: 31.15, lz: 4.25 }),
+      rm('circ', 'Circulação', 17.90, 29.55, 11.93, 13.50, 'circ', '34,28 m²', { parts: [[28.05, 29.55, 4.20, 11.93], [22.35, 28.05, 4.20, 5.60]], lx: 25.0, lz: 12.72 }),
+      rm('ti', 'T.I.', 23.65, 24.65, 5.75, 7.75, 'room', '2,00 m²'),
+      rm('dml', 'D.M.L.', 24.75, 25.85, 5.75, 7.75, 'room', '2,20 m²'),
+      rm('ism-func', 'I.S. masculino funcionários', 25.95, 26.95, 5.75, 7.75, 'wet', '2,20 m²', { curto: 'I.S.M. func.' }),
+      rm('isf-func', 'I.S. feminino funcionários', 27.05, 27.95, 5.75, 7.75, 'wet', '2,20 m²', { curto: 'I.S.F. func.' }),
+      rm('util', 'Sala de utilidades', 29.65, 32.60, 5.45, 7.85, 'room', '5,88 m²'),
+      rm('ergo', 'Teste ergométrico', 17.90, 20.90, 7.95, 11.83, 'consult', '12,00 m²'),
+      rm('is-mid', 'I.S.', 21.00, 22.60, 10.05, 11.83, 'wet', '3,00 m²'),
+      rm('vest', 'Vestiário', 21.00, 22.60, 7.95, 9.95, 'wet', '2,85 m²'),
+      rm('us', 'Ultrassonografia', 22.70, 24.80, 7.95, 11.83, 'consult', '9,60 m²', { curto: 'Ultrasso- nografia' }),
+      rm('proc', 'Sala de procedimentos', 24.90, 27.95, 7.95, 11.83, 'consult', '11,62 m²', { desc: 'Inclui o carrinho de emergência.' }),
+      rm('c04', 'Consultório indiferenciado 04', 29.65, 32.60, 7.95, 11.83, 'consult', '11,68 m²'),
+      rm('is-leste', 'I.S.', 29.65, 32.60, 11.93, 13.50, 'wet', '4,20 m²'),
+      rm('c01', 'Consultório indiferenciado 01', 17.87, 21.28, 13.60, 16.82, 'consult', '11,15 m²'),
+      rm('c02', 'Consultório indiferenciado 02', 21.38, 24.78, 13.60, 16.82, 'consult', '11,15 m²'),
+      rm('c03', 'Consultório indiferenciado 03', 24.88, 28.28, 13.60, 16.82, 'consult', '11,15 m²'),
+      rm('uro', 'Consultório urologia / ginecologia', 28.38, 32.60, 13.60, 16.82, 'consult', '13,43 m²', { curto: 'Consult. urologia/ ginecologia' }),
+      { tipo: 'label', x: 9.6, z: 15.4, text: 'ESTACIONAMENTO DESCOBERTO', sub: '109,68 m²' }
     ]
   },
   pav2: {
     titulo: '2º pavimento — pediatria e terraço',
-    nota: 'Volume menor que o térreo, com terraço descoberto ao norte e a leste. Não há rampa neste pavimento.',
-    slab: [12.2, 0.3, 14.2, 11.4],
-    terrazo: true,
+    slabs: [[14.45, 25.25, 0, 9.59]],
     items: [
-      { tipo: 'terrazo', nome: 'Terraço descoberto', area: '175,12 m²', x: 12.2, z: 11.7, l: 20.35, w: 5.38 },
-      { tipo: 'terrazo', nome: 'Terraço descoberto', area: '175,12 m²', x: 26.4, z: 0.3, l: 6.15, w: 11.4 },
-      room('ped01', 'Consultório de pediatria 01', 12.40, 7.90, 3.85, 3.60, 'consult', '13,67 m²'),
-      room('ped02', 'Consultório de pediatria 02', 16.35, 7.90, 3.40, 3.60, 'consult', '12,73 m²'),
-      room('c06', 'Consultório indiferenciado 06', 19.85, 7.90, 4.55, 3.60, 'consult', '12,73 m²'),
-      room('sfem', 'Sanitário feminino', 12.40, 5.85, 2.10, 1.85, 'wet', '3,43 m²'),
-      room('ped03', 'Consultório de pediatria 03', 12.40, 0.45, 3.26, 5.20, 'consult', '12,52 m²'),
-      ...coreRooms('pav2'),
-      room('espera2', 'Espera', 20.70, 2.15, 5.50, 5.55, 'wait', '27,08 m²'),
-      room('kids', 'Espaço kids', 20.80, 0.45, 5.40, 1.60, 'wait', '3,42 m²'),
-      { tipo: 'label', x: 22.4, z: 14.2, text: 'TERRAÇO DESCOBERTO', sub: '175,12 m²' }
+      { tipo: 'terrazo', nome: 'Terraço descoberto', area: '178,12 m²', x: 17.68, z: 9.79, l: 14.95, w: 7.25, desc: 'Laje descoberta sobre o térreo, ao norte e a leste do 2º pavimento.' },
+      { tipo: 'terrazo', nome: 'Terraço descoberto', area: '178,12 m²', x: 25.45, z: 0.0, l: 7.18, w: 9.79, desc: 'Laje descoberta sobre o térreo, ao norte e a leste do 2º pavimento.' },
+      rm('ped01', 'Consultório de pediatria 01', 14.45, 18.30, 5.85, 9.59, 'consult', '13,67 m²'),
+      rm('ped02', 'Consultório de pediatria 02', 18.40, 21.80, 5.85, 9.59, 'consult', '12,73 m²'),
+      rm('c06', 'Consultório indiferenciado 06', 21.90, 25.25, 5.85, 9.59, 'consult', '12,73 m²'),
+      rm('isfem2', 'I.S. feminino / fraldário', 14.45, 16.35, 3.95, 5.75, 'wet', '3,43 m²', { curto: 'I.S. fem.' }),
+      rm('ped03', 'Consultório de pediatria 03', 14.45, 17.75, 0.05, 3.85, 'consult', '12,52 m²'),
+      rm('espera2p', 'Espera', 22.20, 25.25, 1.43, 5.75, 'wait', '27,08 m²', { parts: [[20.55, 22.20, 1.90, 5.75], [16.35, 20.55, 3.95, 5.75]], lx: 23.7, lz: 3.9, desc: 'Nível +5,16. Inclui o hall em frente à escada e ao elevador.' }),
+      rm('escada-pav2', 'Escada', ESC.x0, ESC.x1, 0.05, 2.20, 'core', '8,04 m²', { parts: [[19.25, ESC.x1, 2.20, 3.90]] }),
+      rm('ismasc2', 'I.S. masculino', 17.90, 19.20, 2.25, 3.85, 'wet', '2,00 m²', { curto: 'I.S. masc.' }),
+      rm('elv-pav2', 'Elevador', ELV.x0, ELV.x1, ELV.z0, ELV.z1, 'elv', '2,40 m²'),
+      rm('kids', 'Espaço kids', 22.85, 25.25, 0.05, 1.43, 'wait', '3,42 m²'),
+      { tipo: 'label', x: 25.2, z: 13.3, text: 'TERRAÇO DESCOBERTO', sub: '178,12 m²' }
     ]
   },
   caixa: {
     titulo: "Cobertura — caixa d'água",
-    nota: 'Quatro reservatórios sobre a laje de fechamento do 2º pavimento.',
-    slab: [16.9, 3.6, 6.6, 5.2],
     items: [
-      room('caixa', "Caixa d'água", 16.9, 3.6, 6.6, 5.2, 'room', '38,00 m²'),
-      { tipo: 'tank', cx: 18.5, cz: 4.9 },
-      { tipo: 'tank', cx: 21.3, cz: 4.9 },
-      { tipo: 'tank', cx: 18.5, cz: 7.5 },
-      { tipo: 'tank', cx: 21.3, cz: 7.5 },
-      { tipo: 'label', x: 20.2, z: 2.8, text: "CAIXA D'ÁGUA", sub: 'LAJE DE FECHAMENTO' }
+      { tipo: 'terrazo', laje: true, nome: 'Laje descoberta (cobertura do 2º pavimento)', area: '97,45 m²', x: 14.25, z: -0.20, l: 11.20, w: 9.99 },
+      rm('caixa', "Caixa d'água", 15.70, 21.70, 0.0, 4.80, 'room', '28,80 m²', { nolabel: true, desc: 'Quatro reservatórios, nível +8,31. Porta P11 no lado leste.' }),
+      { tipo: 'tank', cx: 16.98, cz: 3.53 }, { tipo: 'tank', cx: 19.60, cz: 3.53 },
+      { tipo: 'tank', cx: 16.98, cz: 1.23 }, { tipo: 'tank', cx: 19.60, cz: 1.23 },
+      { tipo: 'label', x: 18.7, z: 5.6, text: "CAIXA D'ÁGUA", sub: '28,80 m² · nível +8,31' },
+      { tipo: 'label', x: 20.0, z: 7.6, text: 'LAJE DESCOBERTA', sub: '97,45 m²' }
     ]
   }
 };
 
 function y(z) { return W - z; }
 function fillKind(k) {
-  return { stall:'var(--stall)', NORMAL:'var(--stall)', PCD:'var(--pcd)', IDOSO:'var(--idoso)', MOTO:'var(--moto)',
+  return { NORMAL:'var(--stall)', PCD:'var(--pcd)', IDOSO:'var(--idoso)', MOTO:'var(--moto)',
            consult:'var(--room-consult)', wet:'var(--room-wet)', wait:'var(--room-wait)', circ:'var(--room-circ)',
            core:'var(--core)', elv:'var(--elv)', room:'var(--room)' }[k] || 'var(--room)';
 }
 
 let current = 'terreo';
-let selected = null;
-let view = { x: 10, y: 8.6, s: 18 };
-
 const stage = document.getElementById('stage');
+const view = { x: 11.5, y: 8.4, s: 46 };
 
 function itemLabel(it) {
   if (it.tipo === 'stall') {
     if (it.kind === 'MOTO') return `Moto ${it.num}`;
-    if (it.kind === 'IDOSO') return 'Vaga idoso';
-    if (it.kind === 'PCD') return `Vaga PCD ${it.num}`;
+    if (it.kind === 'IDOSO') return `Vaga ${it.num} (idoso)`;
+    if (it.kind === 'PCD') return `Vaga ${it.num} (PCD)`;
     return `Vaga ${it.num}`;
   }
   return it.nome || '';
 }
 
+/* ---------- painéis recolhíveis ---------- */
+function setMin(id, min) {
+  const el = document.getElementById(id);
+  el.classList.toggle('min', min);
+  const h = el.querySelector('.hdr');
+  h.querySelector('.car').textContent = min ? '▸' : '▾';
+  h.setAttribute('aria-expanded', String(!min));
+}
+document.querySelectorAll('.hdr').forEach(h => h.addEventListener('click', () => {
+  const id = h.dataset.card; setMin(id, !document.getElementById(id).classList.contains('min'));
+}));
+
 function showFicha(it) {
-  selected = it;
-  const box = document.getElementById('ficha');
+  const body = document.getElementById('fichaBody');
+  const t = document.getElementById('fichaT');
+  stage.querySelectorAll('.room').forEach(el => el.classList.remove('on'));
   if (!it) {
-    box.innerHTML = '<h2>Ambiente</h2><div class="empty">Clique num cômodo, vaga ou na rampa para ver o nome e o detalhe da planta.</div>';
-    document.querySelectorAll('.room').forEach(el => el.classList.remove('on'));
+    t.textContent = 'Ambiente';
+    body.innerHTML = '<div class="empty">Clique num cômodo, vaga ou rampa para ver o nome e o detalhe da planta.</div>';
     return;
   }
   const pav = FLOORS.find(f => f.id === current).nome;
   const area = it.area ? `<div class="meta">${it.area}</div>` : '';
   const desc = it.desc ? `<div class="meta" style="margin-top:6px">${it.desc}</div>` : '';
-  const tipo = it.tipo === 'stall' ? `Vaga ${it.kind === 'NORMAL' ? 'normal' : it.kind}` :
-               it.tipo === 'ramp' ? 'Rampa de veículos' : it.tipo === 'terrazo' ? 'Área externa' : 'Ambiente interno';
-  box.innerHTML = `<h2>${pav}</h2><div class="nome">${itemLabel(it)}</div><div class="meta">${tipo}</div>${area}${desc}`;
+  const tipo = it.tipo === 'stall' ? (it.kind === 'MOTO' ? 'Vaga de moto' : `Vaga ${it.kind === 'NORMAL' ? 'normal' : it.kind === 'PCD' ? 'PCD' : 'para idoso'}`) :
+               it.tipo === 'ramp' ? 'Rampa de veículos' : (it.tipo === 'terrazo' || it.tipo === 'patio' || it.tipo === 'floreira' || it.tipo === 'faixa') ? 'Área externa / piso' : 'Ambiente';
+  t.textContent = 'Ambiente · ' + pav;
+  body.innerHTML = `<div class="nome">${itemLabel(it)}</div><div class="meta">${tipo}</div>${area}${desc}`;
+  setMin('ficha', false);
 }
 
 function renderFluxo() {
@@ -327,25 +358,34 @@ function renderFluxo() {
   document.getElementById('fluxo').innerHTML = `
     <span class="fluxo-k">Fluxo da rampa</span>
     <span class="fluxo-pill${on('terreo')}">Rua</span>
-    <span class="fluxo-arr">ENTRA →<span>rampa da rua · 3,67 m</span></span>
+    <span class="fluxo-arr">ENTRA →<span>rampa da rua · 2 lances</span></span>
     <span class="fluxo-pill${on('ss1')}">Subsolo 1</span>
     <span class="fluxo-arr">SOBE ou DESCE →<span>rampa norte · 13,65 m</span></span>
     <span class="fluxo-pill${on('ss2')}">Subsolo 2</span>`;
 }
 
+/* ---------- desenho ---------- */
+function R(x, z, l, w, attrs) { return `<rect x="${x}" y="${y(z + w)}" width="${l}" height="${w}" ${attrs || ''}/>`; }
+
 function defs() {
   return `<defs>
     <pattern id="rampH" width="0.55" height="0.55" patternUnits="userSpaceOnUse" patternTransform="rotate(90)">
-      <rect width="0.55" height="0.55" fill="#9da2a6"/>
-      <rect width="0.08" height="0.55" fill="#8a8f94"/>
+      <rect width="0.55" height="0.55" fill="#9da2a6"/><rect width="0.08" height="0.55" fill="#8a8f94"/>
     </pattern>
     <pattern id="terH" width="0.7" height="0.7" patternUnits="userSpaceOnUse">
-      <rect width="0.7" height="0.7" fill="#7fa64a"/>
-      <path d="M0 0.7 L0.7 0" stroke="#6f9440" stroke-width="0.04"/>
+      <rect width="0.7" height="0.7" fill="#7fa64a"/><path d="M0 0.7 L0.7 0" stroke="#6f9440" stroke-width="0.04"/>
+    </pattern>
+    <pattern id="lajeH" width="0.8" height="0.8" patternUnits="userSpaceOnUse">
+      <rect width="0.8" height="0.8" fill="#c9ccce"/><path d="M0 0.8 L0.8 0" stroke="#b8bcbf" stroke-width="0.04"/>
+    </pattern>
+    <pattern id="faixaH" width="0.35" height="0.35" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="0.35" height="0.35" fill="#b4b8bb"/><rect width="0.1" height="0.35" fill="#ffffff"/>
+    </pattern>
+    <pattern id="soloH" width="0.6" height="0.6" patternUnits="userSpaceOnUse">
+      <rect width="0.6" height="0.6" fill="#c9b48f"/><circle cx="0.15" cy="0.15" r="0.05" fill="#a8916a"/><circle cx="0.45" cy="0.45" r="0.04" fill="#b39d76"/>
     </pattern>
     <pattern id="asphalt" width="1.2" height="1.2" patternUnits="userSpaceOnUse">
-      <rect width="1.2" height="1.2" fill="#3d4044"/>
-      <rect width="0.06" height="1.2" fill="#43474c"/>
+      <rect width="1.2" height="1.2" fill="#3d4044"/><rect width="0.06" height="1.2" fill="#43474c"/>
     </pattern>
     <filter id="slabSh" x="-2%" y="-2%" width="104%" height="108%">
       <feDropShadow dx="0" dy="0.12" stdDeviation="0.18" flood-color="#000" flood-opacity="0.35"/>
@@ -367,7 +407,7 @@ function chevrons(x, z, l, w, dir) {
 }
 
 function badge(tx, tz, label, sub) {
-  const tw = Math.max(2.4, Math.max(label.length, (sub||'').length) * 0.26 + 0.55);
+  const tw = Math.max(2.4, Math.max(label.length, (sub||'').length) * 0.24 + 0.55);
   const th = sub ? 0.95 : 0.62;
   const top = y(tz) - th - 0.35;
   return `<g pointer-events="none">
@@ -379,242 +419,275 @@ function badge(tx, tz, label, sub) {
 
 function drawRamp(it, i) {
   const { x, z, l, w, role, dir, verb } = it;
-  const cy = z + w/2;
-  const cx = x + l/2;
+  const cy = z + w/2, cx = x + l/2;
   let s = `<g class="room" data-i="${i}">`;
   s += `<rect class="fill" x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="url(#rampH)" stroke="#4a4f56" stroke-width="0.12"/>`;
-  if (role === 'interna') {
-    s += `<rect x="${x}" y="${y(z+w)}" width="${l}" height="0.18" fill="#5d6268" pointer-events="none"/>`;
-    s += `<rect x="${x}" y="${y(z)}" width="${l}" height="0.18" fill="#5d6268" pointer-events="none"/>`;
-  }
-  if (role === 'acesso' || role === 'boca') {
+  if (role === 'interna') s += R(x, z - 0.15, l, 0.15, 'fill="#5d6268" pointer-events="none"') + R(x - (dir === 1 ? 0 : 0.15), z, 0.15, w, 'fill="#5d6268" pointer-events="none"');
+  s += chevrons(x, z, l, w, dir);
+  if (role === 'acesso') {
     const gx = x + l;
     s += `<line x1="${gx}" y1="${y(z)}" x2="${gx}" y2="${y(z+w)}" stroke="#f0b429" stroke-width="0.14" stroke-dasharray="0.22 0.14"/>`;
-    s += `<text class="lab xs" x="${gx+0.28}" y="${y(cy)+0.1}" style="fill:#1f262d">PORTÃO</text>`;
-  }
-  s += chevrons(x, z, l, w, dir);
-  if (role === 'boca') {
-    s += `<text class="lab sm" x="${cx}" y="${y(cy)+0.08}" style="fill:#1f262d">ENTRADA NO SUBSOLO 1</text>`;
-    s += `<text class="lab xs" x="${cx}" y="${y(cy)+0.48}">DESCE DA RUA · NÃO SEGUE AO SS2</text>`;
-  } else if (role === 'acesso') {
+    s += `<text class="lab xs" x="${gx+0.62}" y="${y(cy)+0.1}" style="fill:#1f262d">PORTÃO</text>`;
+    s += `<text class="lab sm" x="${cx}" y="${y(z+w-0.75)}" style="fill:#1f262d">RAMPA DE ACESSO</text>`;
+    s += `<text class="lab xs" x="${cx}" y="${y(z+0.55)}" style="fill:#1f262d">DESCE · 3,87 m · 19,61%</text>`;
   } else {
-    s += `<text class="lab" x="${cx}" y="${y(cy)+0.12}" style="fill:#1f262d">RAMPA INTERNA</text>`;
-    s += `<text class="lab xs" x="${cx}" y="${y(cy)+0.52}">${verb} · i=19,05% · 13,65 m</text>`;
+    s += `<text class="lab" x="${cx}" y="${y(cy+0.55)}" style="fill:#1f262d">RAMPA INTERNA</text>`;
+    s += `<text class="lab xs" x="${cx}" y="${y(cy-0.75)}" style="fill:#1f262d">${verb} · i=19,05% · 13,65 m</text>`;
   }
   s += `</g>`;
   if (role === 'interna') {
-    if (dir === 1) {
-      s += badge(x + 2.05, z + 0.85, 'DESTE PISO', 'Subsolo 2');
-      s += badge(x + l - 2.15, z + 0.85, 'SOBE', 'para o Subsolo 1');
-    } else {
-      s += badge(x + 2.15, z + 0.85, 'DESCE', 'para o Subsolo 2');
-      s += badge(x + l - 2.05, z + 0.85, 'DESTE PISO', 'Subsolo 1');
-    }
+    if (dir === 1) { s += badge(x + 2.05, z + 3.05, 'DESTE PISO', 'Subsolo 2'); s += badge(x + l - 2.15, z + 3.05, 'SOBE', 'para o Subsolo 1'); }
+    else { s += badge(x + 2.15, z + 3.05, 'DESCE', 'para o Subsolo 2'); s += badge(x + l - 2.05, z + 3.05, 'DESTE PISO', 'Subsolo 1'); }
   } else {
-    s += badge(x - 1.15, cy, 'RUA', '');
-    s += badge(x + l + 1.55, cy, 'CHEGA', 'no Subsolo 1');
+    s += badge(x + l + 1.9, cy, 'CHEGA', 'no Subsolo 1');
   }
   return s;
 }
 
 function drawStall(it, i) {
-  const fill = fillKind(it.kind);
+  const fill = it.tipo === 'faixa' ? 'url(#faixaH)' : fillKind(it.kind);
   const cx = it.x + it.l/2, cz = it.z + it.w/2;
-  const label = it.kind === 'MOTO' ? `M${it.num}` : it.kind === 'IDOSO' ? 'IDOSO' : (it.num != null ? String(it.num) : '');
-  const sub = it.kind === 'PCD' ? 'PCD' : it.kind === 'MOTO' ? '' : it.kind === 'IDOSO' ? '' : 'NORMAL';
+  if (it.tipo === 'faixa') return `<g class="room" data-i="${i}"><rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="${fill}" stroke="#ffffff" stroke-width="0.08"/></g>`;
+  const moto = it.kind === 'MOTO';
+  const label = moto ? `M${it.num}` : String(it.num);
+  const sub = { PCD: 'PCD', IDOSO: 'IDOSO', NORMAL: 'NORMAL' }[it.kind] || '';
   return `<g class="room" data-i="${i}">
     <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="${fill}" stroke="#ffffff" stroke-width="0.1"/>
-    <text class="lab" x="${cx}" y="${y(cz)+0.12}" style="fill:#ffffff;font-size:0.55px;font-weight:700">${label}</text>
+    <text class="lab" x="${cx}" y="${y(cz)+(moto ? 0.16 : 0.08)}" style="fill:#ffffff;font-size:${moto ? 0.42 : 0.55}px;font-weight:700">${label}</text>
     ${sub ? `<text class="lab xs" x="${cx}" y="${y(cz)+0.48}" style="fill:#ffffff">${sub}</text>` : ''}
   </g>`;
 }
 
-function drawRoom(it, i) {
-  const fill = fillKind(it.kind);
-  const cx = it.x + it.l/2, cz = it.z + it.w/2;
-  const nome = it.nome.replace('Consultório indiferenciado ', 'Consult. ').replace('Consultório de ', 'Consult. ');
-  const lines = wrap(nome, it.l > 2.4 ? 16 : 12);
-  const fs = it.l < 2.1 || it.w < 1.6 ? 'xs' : (it.l < 3 || it.w < 2.2 ? 'sm' : '');
-  let ty = y(cz) - (lines.length - 1) * 0.2;
-  const texts = lines.map((ln, k) => `<text class="lab ${fs}" x="${cx}" y="${ty + k*0.4}">${ln}</text>`).join('');
-  const area = it.area && it.w > 2 && it.l > 2 ? `<text class="area" x="${cx}" y="${ty + lines.length*0.4}">${it.area}</text>` : '';
-  const stroke = it.kind === 'elv' ? '#2f7fb5' : 'var(--room-stroke)';
-  let extra = '';
-  if (it.kind === 'core') {
-    const treads = 9;
-    for (let k = 1; k < treads; k++) {
-      const zy = y(it.z + it.w * k / treads);
-      extra += `<line x1="${it.x+0.12}" y1="${zy}" x2="${it.x+it.l-0.12}" y2="${zy}" stroke="#7a8086" stroke-width="0.04" pointer-events="none"/>`;
-    }
-  }
-  return `<g class="room" data-i="${i}">
-    <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="${fill}" stroke="${stroke}" stroke-width="0.14"/>
-    ${extra}${texts}${area}
-  </g>`;
-}
-
 function wrap(s, n) {
-  const w = s.split(' ');
-  const lines = [];
-  let cur = '';
-  for (const p of w) {
-    const t = cur ? cur + ' ' + p : p;
-    if (t.length > n && cur) { lines.push(cur); cur = p; }
-    else cur = t;
-  }
+  const w = s.split(' '); const lines = []; let cur = '';
+  for (const p of w) { const t = cur ? cur + ' ' + p : p; if (t.length > n && cur) { lines.push(cur); cur = p; } else cur = t; }
   if (cur) lines.push(cur);
   return lines.slice(0, 3);
 }
 
+function drawRoom(it, i) {
+  const fill = fillKind(it.kind);
+  const stroke = it.kind === 'elv' ? '#2f7fb5' : 'var(--room-stroke)';
+  const rects = [[it.x, it.z, it.l, it.w], ...(it.parts || []).map(([a, b, c, d]) => [a, c, b - a, d - c])];
+  let s = `<g class="room" data-i="${i}">`;
+  for (const [x, z, l, w] of rects) s += `<rect class="fill" x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="${fill}" stroke="${stroke}" stroke-width="0.12"/>`;
+  if (rects.length > 1) for (const [x, z, l, w] of rects) s += `<rect x="${x+0.07}" y="${y(z+w)+0.07}" width="${Math.max(0,l-0.14)}" height="${Math.max(0,w-0.14)}" fill="${fill}" pointer-events="none"/>`;
+  if (it.kind === 'core') {
+    for (const [x, z, l, w] of rects) {
+      const n = Math.max(3, Math.round(w / 0.42));
+      for (let k = 1; k < n; k++) { const zy = y(z + w * k / n); s += `<line x1="${x+0.12}" y1="${zy}" x2="${x+l-0.12}" y2="${zy}" stroke="#7a8086" stroke-width="0.04" pointer-events="none"/>`; }
+    }
+  }
+  if (!it.nolabel) {
+    const cx = it.lx != null ? it.lx : it.x + it.l/2, cz = it.lz != null ? it.lz : it.z + it.w/2;
+    const nome = it.curto || it.nome.replace('Consultório indiferenciado ', 'Consult. ').replace('Consultório de ', 'Consult. ');
+    const minD = Math.min(it.l, it.w);
+    const fs = it.l < 1.9 || minD < 1.6 ? 'xs' : (it.l < 3 || minD < 2.2 ? 'sm' : '');
+    const cw = fs === 'xs' ? 0.135 : fs === 'sm' ? 0.165 : 0.205;
+    const lines = wrap(nome, Math.max(4, Math.floor((it.l - 0.2) / cw)));
+    const lh = fs === 'xs' ? 0.3 : fs === 'sm' ? 0.36 : 0.42;
+    const ty = y(cz) - (lines.length - 1) * lh / 2 + (fs === 'xs' ? 0.02 : 0.06);
+    lines.forEach((ln, k) => { s += `<text class="lab ${fs}" x="${cx}" y="${ty + k*lh}">${ln}</text>`; });
+    if (it.area && it.l >= 1.0 && minD >= 1.4) s += `<text class="area" x="${cx}" y="${ty + lines.length*lh - 0.04}">${it.area}</text>`;
+  }
+  return s + `</g>`;
+}
+
 function siteLayer(id) {
   let s = '';
-  s += `<rect x="-22" y="${y(W+18)}" width="80" height="50" fill="#6f9a3e"/>`;
+  s += `<rect x="-30" y="${y(W+30)}" width="100" height="80" fill="#6f9a3e"/>`;
   s += `<rect x="-18" y="${y(W+4)}" width="8" height="${W+8}" fill="url(#asphalt)"/>`;
   s += `<rect x="-10.2" y="${y(W+4)}" width="0.35" height="${W+8}" fill="#d9dcdf"/>`;
   s += `<line x1="-14.2" y1="${y(W+3)}" x2="-14.2" y2="${y(-3)}" stroke="#f0d000" stroke-width="0.1" stroke-dasharray="0.8 0.45"/>`;
   s += `<text class="lab muted" x="-16.3" y="${y(3.2)}" transform="rotate(-90 -16.3 ${y(3.2)})">RUA DESEMBARGADOR VIEIRA CAVALCANTI</text>`;
-  const ez = RAMP_RUA.z + RAMP_RUA.w/2;
-  const showEntry = (id === 'ss1');
-  if (showEntry) s += `<polygon points="-10.35,${y(ez)} -12.2,${y(ez)-0.5} -12.2,${y(ez)+0.5}" fill="#f0d78a"/>`;
   s += `<rect x="-9.85" y="${y(W+4)}" width="2.2" height="${W+8}" fill="#cfcac0"/>`;
   s += `<rect x="-7.65" y="${y(W+2.2)}" width="7.45" height="${W+4.4}" fill="#7aa646"/>`;
-  s += `<rect x="${L+0.2}" y="${y(W+2.2)}" width="4.2" height="${W+4.4}" fill="#7aa646"/>`;
-  s += `<rect x="-0.4" y="${y(-0.2)}" width="${L+0.8}" height="2.0" fill="#7aa646"/>`;
-  s += `<rect x="-0.4" y="${y(W+2.2)}" width="${L+0.8}" height="2.0" fill="#7aa646"/>`;
-  for (const [tx, tz, r] of [[-6.6, 3.4, 1.2], [-4.0, 14.4, 1.0], [-7.0, 15.8, 0.9], [-3.2, 5.1, 1.05]]) {
+  for (const [tx, tz, r] of [[-6.6, 2.4, 1.2], [-4.0, 14.4, 1.0], [-7.0, 15.8, 0.9], [-3.2, 1.6, 1.05]]) {
     s += `<circle cx="${tx}" cy="${y(tz)}" r="${r}" fill="#3f7a35" stroke="#2f5e28" stroke-width="0.1" opacity="0.95"/>`;
     s += `<circle cx="${tx}" cy="${y(tz)}" r="0.18" fill="#5a4030"/>`;
   }
-  if (showEntry) {
-    s += `<rect x="-9.7" y="${y(ez)-2.05}" width="5.1" height="1.25" rx="0.12" fill="#1b2229" stroke="#3a4552" stroke-width="0.04"/>`;
-    s += `<text class="lab xs" x="-7.15" y="${y(ez)-1.58}" style="fill:#ffffff">ENTRADA</text>`;
-    s += `<text class="lab xs" x="-7.15" y="${y(ez)-1.12}" style="fill:#ffffff">DE VEÍCULOS</text>`;
+  if (id === 'ss1') {
+    const ez = RAMP_RUA.z + RAMP_RUA.w/2;
+    s += `<polygon points="-10.35,${y(ez)} -12.2,${y(ez)-0.5} -12.2,${y(ez)+0.5}" fill="#f0d78a"/>`;
+    s += `<rect x="-9.7" y="${y(ez+4.1)}" width="5.1" height="1.25" rx="0.12" fill="#1b2229" stroke="#3a4552" stroke-width="0.04"/>`;
+    s += `<text class="lab xs" x="-7.15" y="${y(ez+4.1)+0.47}" style="fill:#ffffff">ENTRADA</text>`;
+    s += `<text class="lab xs" x="-7.15" y="${y(ez+4.1)+0.93}" style="fill:#ffffff">DE VEÍCULOS</text>`;
   }
   return s;
 }
 
 function northAndScale() {
-  const x = -6.6, z = -1.6;
-  return `<g>
+  const x = -6.6, z = -2.4;
+  return `<g pointer-events="none">
     <circle cx="${x}" cy="${y(z)}" r="0.7" fill="#161d25" stroke="#4ea3d9" stroke-width="0.06"/>
     <polygon points="${x},${y(z)-0.55} ${x-0.22},${y(z)+0.15} ${x+0.22},${y(z)+0.15}" fill="#4ea3d9"/>
     <text class="lab xs" x="${x}" y="${y(z)-0.85}" style="fill:#1f262d">N</text>
-    <rect x="0" y="${y(-1.5)}" width="5" height="0.12" fill="#1f262d"/>
-    <rect x="0" y="${y(-1.38)}" width="0.08" height="0.3" fill="#1f262d"/>
-    <rect x="5" y="${y(-1.38)}" width="0.08" height="0.3" fill="#1f262d"/>
-    <text class="lab xs" x="2.5" y="${y(-2.05)}">5 m</text>
+    <rect x="0" y="${y(-2.3)}" width="5" height="0.12" fill="#1f262d"/>
+    <rect x="0" y="${y(-2.18)}" width="0.08" height="0.3" fill="#1f262d"/>
+    <rect x="5" y="${y(-2.18)}" width="0.08" height="0.3" fill="#1f262d"/>
+    <text class="lab xs" x="2.5" y="${y(-2.85)}">5 m</text>
   </g>`;
-}
-
-function titleBlock(d) {
-  return `<text class="lab" x="${L/2}" y="${y(-2.4)}" font-size="0.42">${d.titulo}</text>`;
 }
 
 function drawFloor(id) {
   const d = DATA[id];
   let s = defs() + siteLayer(id);
-  s += `<rect x="0" y="${y(W)}" width="${L}" height="${W}" fill="#c3c6c8" stroke="#4a4f56" stroke-width="0.3" filter="url(#slabSh)"/>`;
-  s += `<rect x="0.12" y="${y(W)-0.12}" width="${L-0.24}" height="${W-0.24}" fill="none" stroke="#9a9ea2" stroke-width="0.05"/>`;
-  if (d.slab) {
-    const [x,z,l,w] = d.slab;
-    s += `<rect x="${x}" y="${y(z+w)}" width="${l}" height="${w}" fill="#d6d8d9" stroke="#4a4f56" stroke-width="0.12"/>`;
+  if (d.externo) { const [a, b, c, e] = d.externo; s += R(a, c, b - a, e - c, 'fill="#d9d4c8" stroke="#9a948a" stroke-width="0.06"'); }
+  if (d.solo) for (const [a, b, c, e] of d.solo) s += R(a, c, b - a, e - c, 'fill="url(#soloH)" stroke="#8f7c5c" stroke-width="0.06"');
+  if (d.acesso) {
+    s += `<g class="room" data-acc="1">` + R(-7.65, RAMP_RUA.z, RAMP_RUA.x + 7.65, RAMP_RUA.w, 'class="fill" fill="#a9adb1" stroke="#6d7277" stroke-width="0.08" stroke-dasharray="0.3 0.2"');
+    s += `<text class="lab xs" x="-2.45" y="${y(7.75)}" style="fill:#1f262d">VEM DA RUA</text>`;
+    s += `<text class="lab xs" x="-2.45" y="${y(7.2)}" style="fill:#3a4148">1º lance 3,96 m · 19,17%</text>`;
+    s += `<text class="lab xs" x="-2.45" y="${y(6.75)}" style="fill:#3a4148">+ patamar −0,36</text></g>`;
   }
-  if (d.patio) {
-    s += `<rect x="0.4" y="${y(5.6)}" width="5.4" height="4.0" fill="#e2ddd2" stroke="#9a948a" stroke-width="0.06"/>`;
-    s += `<rect x="0.4" y="${y(6.2)}" width="5.4" height="0.7" fill="#7aa646"/>`;
-    s += `<rect x="0.4" y="${y(12.2)}" width="0.55" height="8.5" fill="#7aa646"/>`;
-  }
+  if (d.slabs) for (const [a, b, c, e] of d.slabs) s += R(a, c, b - a, e - c, 'fill="#d6d8d9" stroke="#4a4f56" stroke-width="0.3" filter="url(#slabSh)"');
+  if (d.poly) s += `<polygon points="${d.poly.map(([px, pz]) => `${px},${y(pz)}`).join(' ')}" fill="#e4e2dc" stroke="#4a4f56" stroke-width="0.28" filter="url(#slabSh)"/>`;
   d.items.forEach((it, i) => {
-    if (it.tipo === 'stall') s += drawStall(it, i);
+    if (it.tipo === 'stall' || it.tipo === 'faixa') s += drawStall(it, i);
     else if (it.tipo === 'room') s += drawRoom(it, i);
     else if (it.tipo === 'ramp') s += drawRamp(it, i);
-    else if (it.tipo === 'terrazo') {
-      s += `<g class="room" data-i="${i}">
-        <rect class="fill" x="${it.x}" y="${y(it.z+it.w)}" width="${it.l}" height="${it.w}" fill="url(#terH)" stroke="#5d6268" stroke-width="0.08"/>
-      </g>`;
-    } else if (it.tipo === 'tank') {
-      s += `<circle cx="${it.cx}" cy="${y(it.cz)}" r="0.85" fill="#b7c4cc" stroke="#8aa0aa" stroke-width="0.08"/>`;
-    } else if (it.tipo === 'label') {
+    else if (it.tipo === 'terrazo') s += `<g class="room" data-i="${i}">` + R(it.x, it.z, it.l, it.w, `class="fill" fill="${it.laje ? 'url(#lajeH)' : 'url(#terH)'}" stroke="#5d6268" stroke-width="0.08"`) + `</g>`;
+    else if (it.tipo === 'patio') {
+      s += `<g class="room" data-i="${i}">` + R(it.x, it.z, it.l, it.w, 'class="fill" fill="#e2ddd2" stroke="#9a948a" stroke-width="0.06"');
+      if (it.txt) s += `<text class="lab xs" x="${it.lx}" y="${y(it.lz)}" style="fill:#3a4148">${it.txt}</text>`;
+      else s += `<text class="lab sm" x="${it.lx}" y="${y(it.lz)}" style="fill:#3a4148">${it.nome.toUpperCase()}</text><text class="area" x="${it.lx}" y="${y(it.lz)+0.38}">${it.area}</text>`;
+      s += `</g>`;
+    }
+    else if (it.tipo === 'floreira') s += `<g class="room" data-i="${i}">` + R(it.x, it.z, it.l, it.w, 'class="fill" fill="#7aa646" stroke="#5f8536" stroke-width="0.06"') + `</g>`;
+    else if (it.tipo === 'tank') s += `<circle cx="${it.cx}" cy="${y(it.cz)}" r="0.9" fill="#b7c4cc" stroke="#8aa0aa" stroke-width="0.08" pointer-events="none"/>`;
+    else if (it.tipo === 'label') {
       s += `<text class="lab" x="${it.x}" y="${y(it.z)}" style="fill:#3a4148">${it.text}</text>`;
-      if (it.sub) s += `<text class="lab xs" x="${it.x}" y="${y(it.z)+0.4}">${it.sub}</text>`;
+      if (it.sub) s += `<text class="lab xs" x="${it.x}" y="${y(it.z)+0.42}">${it.sub}</text>`;
     }
   });
-  s += `<rect x="${ELV.x0}" y="${y(ELV.z0+ELV.d)}" width="${ELV.w}" height="${ELV.d}" fill="none" stroke="#2f7fb5" stroke-width="0.1" pointer-events="none"/>`;
   s += northAndScale();
-  s += titleBlock(d);
+  s += `<text class="lab" x="${L/2}" y="${y(-3.3)}">${d.titulo}</text>`;
   return s;
 }
 
-function viewBox() {
-  const w = stage.clientWidth || 1280, h = stage.clientHeight || 800;
-  const mx = view.s;
-  const my = view.s * (h / w);
-  return `${view.x - mx/2} ${y(view.y) - my/2} ${mx} ${my}`;
+/* ---------- vista: pan e zoom livres ---------- */
+const S_MIN = 3, S_MAX = 160;
+function dims() { return { w: stage.clientWidth || 1280, h: stage.clientHeight || 800 }; }
+function mpp() { return view.s / dims().w; }
+function viewBox() { const { w, h } = dims(); const my = view.s * h / w; return `${view.x - view.s/2} ${y(view.y) - my/2} ${view.s} ${my}`; }
+function applyView() { const el = document.getElementById('svg'); if (el) el.setAttribute('viewBox', viewBox()); }
+function fitView() {
+  const { w, h } = dims();
+  const narrow = w < 700;
+  const x0 = narrow ? -1.5 : -11, x1 = 34, z0 = -3.8, z1 = 19;
+  const padTop = narrow ? 60 : 70, padBot = narrow ? 110 : 120;
+  const usableH = Math.max(200, h - padTop - padBot);
+  const s = Math.max(x1 - x0, (z1 - z0) * w / usableH);
+  view.s = Math.min(S_MAX, s * 1.02);
+  view.x = (x0 + x1) / 2;
+  const m = view.s / w;
+  view.y = (z0 + z1) / 2 - ((padBot - padTop) / 2) * m;
+  applyView();
+}
+function zoomAt(sx, sy, f) {
+  const { w, h } = dims();
+  const m0 = mpp();
+  const wx = view.x + (sx - w/2) * m0, wz = view.y - (sy - h/2) * m0;
+  view.s = Math.min(S_MAX, Math.max(S_MIN, view.s * f));
+  const m1 = mpp();
+  view.x = wx - (sx - w/2) * m1; view.y = wz + (sy - h/2) * m1;
+  applyView();
+}
+function local(e) { const r = stage.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+
+const pts = new Map();
+let down = null, pinch = null;
+function pinchState() { const [a, b] = [...pts.values()]; return { cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, d: Math.hypot(a.x - b.x, a.y - b.y) || 1 }; }
+stage.addEventListener('pointerdown', e => {
+  if (e.button !== undefined && e.button > 0) return;
+  try { stage.setPointerCapture(e.pointerId); } catch (_) {}
+  pts.set(e.pointerId, local(e));
+  if (pts.size === 1) { const p = local(e); down = { x: p.x, y: p.y, moved: false, target: e.target.closest ? e.target.closest('.room') : null }; }
+  else { if (down) down.moved = true; pinch = pts.size === 2 ? pinchState() : null; }
+});
+stage.addEventListener('pointermove', e => {
+  if (!pts.has(e.pointerId)) return;
+  const prev = pts.get(e.pointerId), p = local(e);
+  pts.set(e.pointerId, p);
+  if (pts.size === 1 && down) {
+    if (!down.moved && Math.hypot(p.x - down.x, p.y - down.y) > 5) { down.moved = true; stage.classList.add('drag'); }
+    if (down.moved) { const m = mpp(); view.x -= (p.x - prev.x) * m; view.y += (p.y - prev.y) * m; applyView(); }
+  } else if (pts.size === 2 && pinch) {
+    const n = pinchState();
+    const m = mpp(); view.x -= (n.cx - pinch.cx) * m; view.y += (n.cy - pinch.cy) * m;
+    zoomAt(n.cx, n.cy, pinch.d / n.d);
+    pinch = n;
+  }
+});
+function endPointer(e) {
+  if (!pts.has(e.pointerId)) return;
+  if (pts.size === 1 && down && !down.moved && e.type === 'pointerup') handleClick(down.target);
+  pts.delete(e.pointerId);
+  if (pts.size < 2) pinch = null;
+  if (pts.size === 1) { const p = [...pts.values()][0]; down = { x: p.x, y: p.y, moved: true, target: null }; }
+  if (pts.size === 0) { down = null; stage.classList.remove('drag'); }
+}
+stage.addEventListener('pointerup', endPointer);
+stage.addEventListener('pointercancel', endPointer);
+stage.addEventListener('wheel', e => {
+  e.preventDefault();
+  const p = local(e);
+  const k = e.deltaMode === 1 ? 0.05 : 0.0015;
+  zoomAt(p.x, p.y, Math.exp(Math.max(-0.5, Math.min(0.5, e.deltaY * k))));
+}, { passive: false });
+function zoomCenter(f) { const { w, h } = dims(); zoomAt(w/2, h/2, f); }
+document.getElementById('zIn').addEventListener('click', () => zoomCenter(1/1.35));
+document.getElementById('zOut').addEventListener('click', () => zoomCenter(1.35));
+document.getElementById('zFit').addEventListener('click', fitView);
+
+function handleClick(el) {
+  if (!el) { showFicha(null); return; }
+  let it;
+  if (el.dataset.acc) it = { tipo: 'patio', nome: 'Acesso da rua (1º lance e patamar)', area: '1º lance: 3,96 m (396,35 cm) · 19,17% · patamar no nível −0,36', desc: 'Trecho lido na implantação (folha 1). A posição exata do 1º lance dentro desta faixa é aproximada; o 2º lance, logo a seguir, chega ao portão do Subsolo 1.' };
+  else it = DATA[current].items[+el.dataset.i];
+  if (!it) return;
+  showFicha(it);
+  el.classList.add('on');
 }
 
 function render() {
-  const vb = viewBox();
-  stage.innerHTML = `<svg id="svg" viewBox="${vb}" preserveAspectRatio="xMidYMid meet">${drawFloor(current)}</svg>`;
-  stage.querySelectorAll('.room').forEach(el => {
-    el.addEventListener('click', ev => {
-      ev.stopPropagation();
-      const it = DATA[current].items[+el.dataset.i];
-      stage.querySelectorAll('.room').forEach(n => n.classList.remove('on'));
-      el.classList.add('on');
-      showFicha(it);
-    });
-  });
+  stage.innerHTML = `<svg id="svg" viewBox="${viewBox()}" preserveAspectRatio="xMidYMid meet">${drawFloor(current)}</svg>`;
   renderFluxo();
 }
 
+/* ---------- botões ---------- */
 const btns = document.getElementById('btns');
+function selectFloor(id) {
+  current = id;
+  showFicha(null);
+  document.querySelectorAll('#btns button[data-id]').forEach(x => x.classList.toggle('on', x.dataset.id === current));
+  history.replaceState(null, '', '#' + id);
+  render();
+}
 FLOORS.forEach(f => {
   const b = document.createElement('button');
-  b.type = 'button';
-  b.textContent = f.nome;
-  b.dataset.id = f.id;
-  b.addEventListener('click', () => {
-    current = f.id;
-    selected = null;
-    showFicha(null);
-    document.querySelectorAll('#btns button').forEach(x => x.classList.toggle('on', x.dataset.id === current));
-    history.replaceState(null, '', '#' + f.id);
-    render();
-  });
+  b.type = 'button'; b.innerHTML = `<span class="lg">${f.nome}</span><span class="sh">${f.curto}</span>`; b.dataset.id = f.id; b.title = f.nome;
+  b.addEventListener('click', () => selectFloor(f.id));
   btns.appendChild(b);
 });
-btns.querySelector('[data-id="terreo"]').classList.add('on');
+const sep = document.createElement('span'); sep.className = 'sep'; btns.appendChild(sep);
+const bF = document.createElement('button'); bF.type = 'button'; bF.id = 'btnFluxo'; bF.textContent = 'Rampa ▸';
+bF.addEventListener('click', () => { const on = document.getElementById('bottom').classList.toggle('fluxo-on'); bF.textContent = on ? 'Rampa ▾' : 'Rampa ▸'; bF.classList.toggle('on', on); });
+btns.appendChild(bF);
+const bS = document.createElement('button'); bS.type = 'button'; bS.id = 'btnSemUI'; bS.textContent = 'Esconder painéis';
+bS.addEventListener('click', () => document.body.classList.add('semui'));
+btns.appendChild(bS);
+document.getElementById('btnUI').addEventListener('click', () => document.body.classList.remove('semui'));
 
-let dragging = false, last = null;
-stage.addEventListener('pointerdown', e => { dragging = true; last = {x:e.clientX,y:e.clientY}; stage.classList.add('drag'); stage.setPointerCapture(e.pointerId); });
-stage.addEventListener('pointerup', () => { dragging = false; last = null; stage.classList.remove('drag'); });
-stage.addEventListener('pointermove', e => {
-  if (!dragging || !last) return;
-  const w = stage.clientWidth, h = stage.clientHeight;
-  const mx = view.s / w;
-  view.x -= (e.clientX - last.x) * mx;
-  view.y += (e.clientY - last.y) * (view.s * h / w) / h;
-  last = {x:e.clientX,y:e.clientY};
-  document.getElementById('svg').setAttribute('viewBox', viewBox());
-});
-stage.addEventListener('wheel', e => {
-  e.preventDefault();
-  const f = e.deltaY > 0 ? 1.12 : 1/1.12;
-  view.s = Math.min(60, Math.max(8, view.s * f));
-  document.getElementById('svg').setAttribute('viewBox', viewBox());
-}, { passive: false });
-stage.addEventListener('click', e => { if (e.target.tagName === 'svg' || e.target.id === 'stage') showFicha(null); });
-window.addEventListener('resize', render);
+let lastW = 0;
+window.addEventListener('resize', () => { const { w } = dims(); if ((w < 700) !== (lastW < 700)) fitView(); else applyView(); lastW = w; });
 
-const hash = (location.hash || '').replace('#','');
-if (DATA[hash]) {
-  current = hash;
-  document.querySelectorAll('#btns button').forEach(x => x.classList.toggle('on', x.dataset.id === current));
-}
-view.s = 52;
-view.x = 9.2;
-view.y = 8;
+const hash = (location.hash || '').replace('#', '');
+if (DATA[hash]) current = hash;
+document.querySelectorAll('#btns button[data-id]').forEach(x => x.classList.toggle('on', x.dataset.id === current));
+lastW = dims().w;
 render();
+fitView();
 </script>
 </body>
 </html>
