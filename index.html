@@ -7,6 +7,7 @@
   <title>Obra Dr. Clóvis — andamento da construção</title>
   <!-- visual-v8-blender -->
   <!-- visual-v8b-paineis -->
+  <!-- visual-v8c-celular -->
   <script type="importmap">
   { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
   </script>
@@ -68,6 +69,20 @@
     #btnUI { position: absolute; right: 16px; bottom: 16px; z-index: 4; display: none; background: var(--panel); padding: 8px 14px; font-size: 13px; }
     body.semui .top, body.semui .bottom { display: none; }
     body.semui #btnUI { display: block; }
+    /* visual-v8c-celular */
+    @media (max-width: 700px) {
+      .bottom { left: 8px; right: 8px; bottom: 8px; padding: 8px 10px 9px; border-radius: 12px; }
+      .bar-head { margin-bottom: 2px; }
+      .bar-head strong { font-size: 12px; }
+      .bar-head strong { white-space: nowrap; }
+      .bar-head span { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+      .ticks, .hint { display: none; }
+      .actions { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; gap: 6px; margin-top: 6px; padding-bottom: 2px; }
+      .actions::-webkit-scrollbar { display: none; }
+      .actions button { flex: 0 0 auto; padding: 5px 9px; font-size: 11px; white-space: nowrap; }
+      .bottom.min .actions { display: none; }
+      .bottom .mini { top: 6px; right: 6px; }
+    }
   </style>
 </head>
 <body>
@@ -533,7 +548,8 @@
     for (const b of document.querySelectorAll('.mini')) {
       const id = b.dataset.min;
       const saved = lsGet('min_' + id);
-      setMin(id, saved == null ? (id === 'cardInfo') : saved === '1');
+      const celular = window.matchMedia('(max-width: 700px)').matches;
+      setMin(id, saved == null ? (id === 'cardInfo' || (celular && id === 'cardEtapa')) : saved === '1');
       b.onclick = () => setMin(id, !document.getElementById(id).classList.contains('min'));
     }
     const btnRotulos = document.getElementById('btnRotulos');
