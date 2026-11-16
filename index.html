@@ -10,6 +10,7 @@
   <!-- visual-v8c-celular -->
   <!-- visual-v8d-camera -->
   <!-- visual-v8f-araucarias: vizinhos removidos, araucarias no entorno -->
+  <!-- visual-v8f-mapa: arrastar move como mapa (1 dedo / botão esquerdo), girar com 2 dedos / botão direito; araucárias provisórias removidas -->
   <!-- visual-v8e-etapas: planta conferida (v8b, modelo espelhado para bater com a planta) + etapas 4.0–9.0 sem data -->
   <script type="importmap">
   { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
@@ -142,7 +143,7 @@
       <button type="button" id="btnRotulos">Esconder nomes</button>
       <button type="button" id="btnSemUI">Esconder painéis</button>
     </div>
-    <div class="hint">Arraste a barra para montar ou desmontar. Gire com um dedo (ou botão esquerdo), arraste para os lados com dois dedos (ou botão direito), aproxime com pinça ou roda; dois toques num ponto aproximam dele e ⟲ Recentralizar volta a vista. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
+    <div class="hint">Arraste a barra para montar ou desmontar. Arraste com um dedo (ou botão esquerdo) para andar para qualquer lado, gire com dois dedos (ou botão direito), aproxime com pinça ou roda; setas do teclado também andam; dois toques num ponto aproximam dele e ⟲ Recentralizar volta a vista. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
   </div>
   <button type="button" id="btnUI">Mostrar painéis</button>
     <script type="module">
@@ -260,15 +261,15 @@
     controls.minDistance = 0.6;
     controls.maxDistance = 170;
     controls.zoomToCursor = true;
-    controls.screenSpacePanning = true;
+    controls.screenSpacePanning = false;   // visual-v8f-mapa: arrastar desliza pelo chão, como num mapa
     controls.panSpeed = 1.1;
     controls.zoomSpeed = 1.15;
-    controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
-    controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+    controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
+    controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
     controls.listenToKeyEvents(window);
     controls.keyPanSpeed = 14;
     canvas.addEventListener('contextmenu', e => e.preventDefault());
-    const LIM = { x0: -32, x1: 58, y0: -8, y1: 22, z0: -42, z1: 25 };
+    const LIM = { x0: -70, x1: 95, y0: -8, y1: 30, z0: -75, z1: 60 };
     function limitaAlvo() {
       const t = controls.target;
       const cx = Math.min(LIM.x1, Math.max(LIM.x0, t.x)) - t.x;
