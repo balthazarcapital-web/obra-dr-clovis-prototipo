@@ -496,25 +496,63 @@ function drawRoom(it, i) {
   return s + `</g>`;
 }
 
+// Frente do lote conforme a implantação (folha 1), na mesma régua da rampa (≈59 px/m):
+// divisa/muro frontal x −10,31 · meio-fio x −16,24 · passeio 1,20 + 1,51 + 3,24 m.
+const FRENTE = { lote: -10.31, meioFio: -16.24 };
 function siteLayer(id) {
-  let s = '';
-  s += `<rect x="-30" y="${y(W+30)}" width="100" height="80" fill="#6f9a3e"/>`;
-  s += `<rect x="-18" y="${y(W+4)}" width="8" height="${W+8}" fill="url(#asphalt)"/>`;
-  s += `<rect x="-10.2" y="${y(W+4)}" width="0.35" height="${W+8}" fill="#d9dcdf"/>`;
-  s += `<line x1="-14.2" y1="${y(W+3)}" x2="-14.2" y2="${y(-3)}" stroke="#f0d000" stroke-width="0.1" stroke-dasharray="0.8 0.45"/>`;
-  s += `<text class="lab muted" x="-16.3" y="${y(3.2)}" transform="rotate(-90 -16.3 ${y(3.2)})">RUA DESEMBARGADOR VIEIRA CAVALCANTI</text>`;
-  s += `<rect x="-9.85" y="${y(W+4)}" width="2.2" height="${W+8}" fill="#cfcac0"/>`;
-  s += `<rect x="-7.65" y="${y(W+2.2)}" width="7.45" height="${W+4.4}" fill="#7aa646"/>`;
-  for (const [tx, tz, r] of [[-6.6, 2.4, 1.2], [-4.0, 14.4, 1.0], [-7.0, 15.8, 0.9], [-3.2, 1.6, 1.05]]) {
-    s += `<circle cx="${tx}" cy="${y(tz)}" r="${r}" fill="#3f7a35" stroke="#2f5e28" stroke-width="0.1" opacity="0.95"/>`;
-    s += `<circle cx="${tx}" cy="${y(tz)}" r="0.18" fill="#5a4030"/>`;
-  }
+  const F = FRENTE; let s = '';
+  s += `<rect x="-60" y="${y(W+80)}" width="150" height="180" fill="#6f9a3e"/>`;
+  s += `<rect x="${F.meioFio - 8}" y="${y(W+5)}" width="8" height="${W+10}" fill="url(#asphalt)"/>`;
+  s += `<line x1="${F.meioFio - 4}" y1="${y(W+4)}" x2="${F.meioFio - 4}" y2="${y(-4)}" stroke="#f0d000" stroke-width="0.1" stroke-dasharray="0.8 0.45"/>`;
+  s += `<text class="lab muted" x="${F.meioFio - 6.1}" y="${y(3.2)}" transform="rotate(-90 ${F.meioFio - 6.1} ${y(3.2)})">RUA DESEMBARGADOR VIEIRA CAVALCANTI</text>`;
+  // passeio (blocos intertravados) com os canteiros de grama da implantação
+  s += `<rect x="${F.meioFio}" y="${y(W+5)}" width="${F.lote - F.meioFio}" height="${W+10}" fill="#cfcac0"/>`;
+  s += `<rect x="${F.meioFio}" y="${y(W+5)}" width="0.3" height="${W+10}" fill="#d9dcdf"/>`;
+  for (const [a, b, c, e] of [[-16.24, -15.04, 10.05, 18.81], [-13.53, -10.31, 10.05, 18.81], [-16.24, -15.04, -0.93, 4.97], [-13.53, -10.31, 0.98, 4.97]])
+    s += R(a, c, b - a, e - c, 'fill="#8fb35a" stroke="#7a9c4a" stroke-width="0.04"');
+  // lote: gramado da frente e muro frontal
+  s += `<rect x="${F.lote}" y="${y(18.81)}" width="${-0.2 - F.lote}" height="${18.81 + 0.93}" fill="#7aa646"/>`;
+  s += `<rect x="${F.lote}" y="${y(10.0)}" width="${-7.65 - F.lote}" height="5" fill="#bfbab0"/>`;
+  s += `<line x1="${F.lote}" y1="${y(18.81)}" x2="${F.lote}" y2="${y(10.0)}" stroke="#5d6268" stroke-width="0.15"/><line x1="${F.lote}" y1="${y(5.0)}" x2="${F.lote}" y2="${y(-0.93)}" stroke="#5d6268" stroke-width="0.15"/>`;
   if (id === 'ss1' || id === 'terreo') {
     const ez = RAMP_RUA.z + RAMP_RUA.w/2;
-    s += `<polygon points="-10.35,${y(ez)} -12.2,${y(ez)-0.5} -12.2,${y(ez)+0.5}" fill="#f0d78a"/>`;
-    s += `<rect x="-9.7" y="${y(ez+4.1)}" width="5.1" height="1.25" rx="0.12" fill="#1b2229" stroke="#3a4552" stroke-width="0.04"/>`;
-    s += `<text class="lab xs" x="-7.15" y="${y(ez+4.1)+0.47}" style="fill:#ffffff">ENTRADA</text>`;
-    s += `<text class="lab xs" x="-7.15" y="${y(ez+4.1)+0.93}" style="fill:#ffffff">DE VEÍCULOS</text>`;
+    s += `<polygon points="${F.meioFio - 0.1},${y(ez)} ${F.meioFio - 1.95},${y(ez)-0.5} ${F.meioFio - 1.95},${y(ez)+0.5}" fill="#f0d78a"/>`;
+    s += `<rect x="-15.9" y="${y(ez+1.6)}" width="5.1" height="1.25" rx="0.12" fill="#1b2229" stroke="#3a4552" stroke-width="0.04"/>`;
+    s += `<text class="lab xs" x="-13.35" y="${y(ez+1.6)+0.47}" style="fill:#ffffff">ENTRADA</text>`;
+    s += `<text class="lab xs" x="-13.35" y="${y(ez+1.6)+0.93}" style="fill:#ffffff">DE VEÍCULOS</text>`;
+  }
+  return s;
+}
+
+// Árvores do projeto (implantação, folha 1): 2 araucárias no jardim da frente + 2 árvores de rua no passeio.
+const ARVORES = [
+  { k: 'arauN', x: -7.48, z: 13.22, copa: 6.50, tronco: 0.29, sub: 'copa R 6,50 m', bx: -7.48, bz: 10.75 },
+  { k: 'arauS', x: -6.04, z: 2.54, copa: 3.50, tronco: 0.19, sub: 'copa R 3,50 m', bx: -6.04, bz: 0.05 },
+  { k: 'ruaN', x: -14.94, z: 19.37, rua: true },
+  { k: 'ruaS', x: -15.45, z: 1.75, rua: true }
+];
+function estrela(cx, cz, ro, ri, n, rot, attrs) {
+  const p = [];
+  for (let i = 0; i < n * 2; i++) { const a = rot + i * Math.PI / n, r = i % 2 ? ri : ro; p.push(`${(cx + r * Math.sin(a)).toFixed(3)},${(y(cz) - r * Math.cos(a)).toFixed(3)}`); }
+  return `<polygon points="${p.join(' ')}" ${attrs}/>`;
+}
+function treesLayer(id) {
+  if (id !== 'terreo' && id !== 'ss1') return '';
+  let s = '';
+  for (const t of ARVORES) {
+    if (t.rua) {
+      s += `<g class="room" data-acc="${t.k}"><circle class="fill" cx="${t.x}" cy="${y(t.z)}" r="1.15" fill="#4f8a3c" stroke="#2f5e28" stroke-width="0.06" opacity="0.95"/>`;
+      s += estrela(t.x, t.z, 1.0, 0.45, 6, 0, 'fill="#3d7330" pointer-events="none"');
+      s += `<circle cx="${t.x}" cy="${y(t.z)}" r="0.14" fill="#5a4030" pointer-events="none"/></g>`;
+      continue;
+    }
+    s += `<circle cx="${t.x}" cy="${y(t.z)}" r="${t.copa}" fill="none" stroke="#1f3d22" stroke-width="0.07" stroke-dasharray="0.45 0.3" pointer-events="none"/>`;
+    s += `<g class="room" data-acc="${t.k}"><circle class="fill" cx="${t.x}" cy="${y(t.z)}" r="1.75" fill="#1f4a26" opacity="0.9"/>`;
+    s += estrela(t.x, t.z, 1.7, 0.55, 8, 0, 'fill="#2b6233" pointer-events="none"');
+    s += estrela(t.x, t.z, 1.15, 0.4, 8, Math.PI / 8, 'fill="#3d7d40" pointer-events="none"');
+    s += estrela(t.x, t.z, 0.65, 0.25, 8, 0, 'fill="#5a9a4c" pointer-events="none"');
+    s += `<circle cx="${t.x}" cy="${y(t.z)}" r="${t.tronco}" fill="#6b4a32" stroke="#2a1d12" stroke-width="0.04" stroke-dasharray="0.08 0.06" pointer-events="none"/></g>`;
+    s += badge(t.bx, t.bz, 'ARAUCÁRIA', t.sub);
   }
   return s;
 }
@@ -566,6 +604,10 @@ const ACC = {
   lance: { tipo: 'patio', nome: 'Acesso da rua · 1º lance', area: 'Extensão 3,96 m (396,35 cm) · inclinação 19,17% · desce até o patamar −0,36', desc: 'Trecho da implantação (folha 1), fora da folha do térreo. A entrada de veículos é pela Rua Desembargador Vieira Cavalcanti, a oeste.' },
   patamar: { tipo: 'patio', nome: 'Patamar (nível −0,36)', area: 'Cerca de 4,9 × 5,0 m, entre o 1º lance e o 2º lance', desc: 'Daqui o carro escolhe: segue para leste pelo 2º lance até o Subsolo 1, ou vira para o norte pela rampa ao estacionamento descoberto (vagas 26 a 29).' },
   ramal: { tipo: 'ramp', nome: 'Rampa ao estacionamento descoberto', area: 'Extensão 12,29 m · inclinação 14,97%', desc: 'Sai do patamar (−0,36), sobe para o norte na mesma faixa de 5 m e faz a curva para leste, chegando ao estacionamento descoberto do térreo (nível +1,48), onde ficam as vagas 26 a 29. Geometria lida na implantação (folha 1); a curva é aproximada.' },
+  arauN: { tipo: 'patio', nome: 'Araucária (jardim da frente, lado norte)', area: 'Copa R 6,50 m (raio indicado na implantação)', desc: 'Árvore do projeto, desenhada na implantação (folha 1). Tronco a cerca de 2,8 m da divisa da frente e a cerca de 5,6 m da divisa norte, medido no desenho (pelas cotas da folha dá cerca de 6,7 m). A copa tracejada é o raio de 6,50 m.' },
+  arauS: { tipo: 'patio', nome: 'Araucária (jardim da frente, lado sul)', area: 'Copa R 3,50 m (raio indicado na implantação)', desc: 'Árvore do projeto, desenhada na implantação (folha 1). Tronco a cerca de 4,3 m da divisa da frente e a cerca de 3,5 m da divisa sul. A copa tracejada é o raio de 3,50 m.' },
+  ruaN: { tipo: 'patio', nome: 'Árvore de rua (calçada)', area: 'No canteiro do passeio, perto do meio-fio · ponta norte', desc: 'Fora do lote, no passeio da Rua Desembargador Vieira Cavalcanti, como aparece na implantação (folha 1). O tamanho da copa não é cotado na folha; o símbolo é só indicativo.' },
+  ruaS: { tipo: 'patio', nome: 'Árvore de rua (calçada)', area: 'No canteiro do passeio, perto do meio-fio · ponta sul', desc: 'Fora do lote, no passeio da Rua Desembargador Vieira Cavalcanti, como aparece na implantação (folha 1). O tamanho da copa não é cotado na folha; o símbolo é só indicativo.' },
   grama: { tipo: 'patio', nome: 'Grama (área não permeável)', area: '10,77 m²', desc: 'Canteiro entre a rampa ao estacionamento e a floreira, lido na implantação.' },
   '1': { tipo: 'patio', nome: 'Acesso da rua (1º lance e patamar)', area: '1º lance: 3,96 m (396,35 cm) · 19,17% · patamar no nível −0,36', desc: 'Trecho lido na implantação (folha 1). A posição exata do 1º lance dentro desta faixa é aproximada; o 2º lance, logo a seguir, chega ao portão do Subsolo 1.' }
 };
@@ -602,6 +644,7 @@ function drawFloor(id) {
       if (it.sub) s += `<text class="lab xs" x="${it.x}" y="${y(it.z)+0.42}">${it.sub}</text>`;
     }
   });
+  s += treesLayer(id);
   s += northAndScale();
   s += `<text class="lab" x="${L/2}" y="${y(-3.3)}">${d.titulo}</text>`;
   return s;
@@ -616,7 +659,7 @@ function applyView() { const el = document.getElementById('svg'); if (el) el.set
 function fitView() {
   const { w, h } = dims();
   const narrow = w < 700;
-  const x0 = narrow ? (DATA[current] && DATA[current].ramal ? -3 : -1.5) : -11, x1 = 34, z0 = -3.8, z1 = 19;
+  const x0 = narrow ? ((current === 'terreo' || current === 'ss1') ? -10.8 : -1.5) : -17.5, x1 = 34, z0 = -3.8, z1 = 19;
   const padTop = narrow ? 60 : 70, padBot = narrow ? 110 : 120;
   const usableH = Math.max(200, h - padTop - padBot);
   const s = Math.max(x1 - x0, (z1 - z0) * w / usableH);
