@@ -9,6 +9,7 @@
   <!-- visual-v8b-paineis -->
   <!-- visual-v8c-celular -->
   <!-- visual-v8d-camera -->
+  <!-- visual-v8g-mouse: esquerdo gira no ponto clicado, meio/direito arrastam, roda zoom no cursor -->
   <!-- visual-v8f-livre: WASD/setas, giro em volta do ponto clicado, zoom no cursor; araucárias do projeto (implantação) -->
   <!-- visual-v8f-mapa: arrastar move como mapa (1 dedo / botão esquerdo), girar com 2 dedos / botão direito; araucárias provisórias removidas -->
   <!-- visual-v8e-etapas: planta conferida (v8b, modelo espelhado para bater com a planta) + etapas 4.0–9.0 sem data -->
@@ -143,7 +144,7 @@
       <button type="button" id="btnRotulos">Esconder nomes</button>
       <button type="button" id="btnSemUI">Esconder painéis</button>
     </div>
-    <div class="hint">Arraste a barra para montar ou desmontar. Arraste com um dedo (ou botão esquerdo) para andar para qualquer lado, gire com dois dedos (ou botão direito), aproxime com pinça ou roda; no computador W A S D ou as setas andam (Shift corre, Q e E descem e sobem); o giro é sempre em volta do ponto onde você clicou ou tocou; dois toques num ponto aproximam dele e ⟲ Recentralizar volta a vista. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
+    <div class="hint">Arraste a barra para montar ou desmontar. No computador: botão esquerdo gira em volta do ponto clicado, botão do meio ou direito arrasta, a roda aproxima onde está o cursor. No celular: um dedo anda, dois dedos giram e aproximam; W A S D ou as setas andam (Shift corre, Q e E descem e sobem); o giro é sempre em volta do ponto onde você clicou ou tocou; dois toques num ponto aproximam dele e ⟲ Recentralizar volta a vista. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
   </div>
   <button type="button" id="btnUI">Mostrar painéis</button>
     <script type="module">
@@ -163,7 +164,7 @@
         this.arcTo(x,y+h,x,y,r); this.arcTo(x,y,x+w,y,r); this.closePath();
       };
     }
-    const MODEL_URL = 'modelo/obra-dr-clovis.glb';
+    const MODEL_URL = 'modelo/obra-dr-clovis.glb?v=v8g';   // versão no nome evita o navegador usar o modelo antigo guardado
     const SKY_URL = 'modelo/ceu_1k.hdr';
     const DRACO_URL = 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/libs/draco/gltf/';
     const params = new URLSearchParams(location.search);
@@ -265,7 +266,7 @@
     controls.panSpeed = 1.1;
     controls.zoomSpeed = 1.15;
     controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
-    controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
+    controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.PAN, RIGHT: THREE.MOUSE.PAN };   // visual-v8g-mouse: como SketchUp/Revit
     // setas e WASD são tratadas por andaTeclado (visual-v8f-livre)
     controls.keyPanSpeed = 14;
     canvas.addEventListener('contextmenu', e => e.preventDefault());
@@ -770,9 +771,11 @@
       ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
       ray.setFromCamera(ndc, camera);
       const hit = ray.intersectObjects(scene.children, true).find(h => h.object.isMesh && visivel(h.object));
-      if (!hit || hit.distance > 160) return;
-      controls.target.copy(hit.point); controls.update();
-      window.__qaPivo = hit.point.toArray().map(v => +v.toFixed(2));
+      let pt = hit && hit.distance <= 160 ? hit.point : null;
+      if (!pt) { const chao = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0); const q = new THREE.Vector3(); if (ray.ray.intersectPlane(chao, q) && q.distanceTo(camera.position) < 160) pt = q; }
+      if (!pt) return;
+      controls.target.copy(pt); controls.update();
+      window.__qaPivo = pt.toArray().map(v => +v.toFixed(2));
     }
     canvas.addEventListener('pointerdown', e => { if (e.isPrimary) pivoNoPonto(e.clientX, e.clientY); }, { capture: true });
     // WASD (e Shift para correr) anda pelo chão na direção em que a câmera olha; setas também andam
