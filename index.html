@@ -9,7 +9,7 @@
   <!-- visual-v8b-paineis -->
   <!-- visual-v8c-celular -->
   <!-- visual-v8d-camera -->
-  <!-- visual-v8f-araucarias: vizinhos removidos, araucarias no entorno -->
+  <!-- visual-v8f-livre: WASD/setas, giro em volta do ponto clicado, zoom no cursor; araucárias do projeto (implantação) -->
   <!-- visual-v8f-mapa: arrastar move como mapa (1 dedo / botão esquerdo), girar com 2 dedos / botão direito; araucárias provisórias removidas -->
   <!-- visual-v8e-etapas: planta conferida (v8b, modelo espelhado para bater com a planta) + etapas 4.0–9.0 sem data -->
   <script type="importmap">
@@ -143,7 +143,7 @@
       <button type="button" id="btnRotulos">Esconder nomes</button>
       <button type="button" id="btnSemUI">Esconder painéis</button>
     </div>
-    <div class="hint">Arraste a barra para montar ou desmontar. Arraste com um dedo (ou botão esquerdo) para andar para qualquer lado, gire com dois dedos (ou botão direito), aproxime com pinça ou roda; setas do teclado também andam; dois toques num ponto aproximam dele e ⟲ Recentralizar volta a vista. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
+    <div class="hint">Arraste a barra para montar ou desmontar. Arraste com um dedo (ou botão esquerdo) para andar para qualquer lado, gire com dois dedos (ou botão direito), aproxime com pinça ou roda; no computador W A S D ou as setas andam (Shift corre, Q e E descem e sobem); o giro é sempre em volta do ponto onde você clicou ou tocou; dois toques num ponto aproximam dele e ⟲ Recentralizar volta a vista. Os botões abrem o pavimento pronto (cronograma previsto), escondem as lajes de cima e mostram vagas, ambientes internos ou a rampa de entrada do subsolo. Volume aproximado a partir das plantas e cronograma previsto, não um modelo de engenharia. Não publicado no Dash.</div>
   </div>
   <button type="button" id="btnUI">Mostrar painéis</button>
     <script type="module">
@@ -266,7 +266,7 @@
     controls.zoomSpeed = 1.15;
     controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_ROTATE };
     controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.ROTATE };
-    controls.listenToKeyEvents(window);
+    // setas e WASD são tratadas por andaTeclado (visual-v8f-livre)
     controls.keyPanSpeed = 14;
     canvas.addEventListener('contextmenu', e => e.preventDefault());
     const LIM = { x0: -70, x1: 95, y0: -8, y1: 30, z0: -75, z1: 60 };
@@ -763,6 +763,40 @@
       camFly = { p0: camera.position.clone(), t0: controls.target.clone(), p1: alvo.clone().add(dir), t1: alvo, k: 0 };
     }
     canvas.addEventListener('dblclick', e => focaPonto(e.clientX, e.clientY));
+    // visual-v8f-livre: o giro passa a ser em volta do ponto clicado/tocado (a câmera não pula, só troca o pivô)
+    function pivoNoPonto(cx, cy) {
+      if (tour || camFly) return;
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObjects(scene.children, true).find(h => h.object.isMesh && visivel(h.object));
+      if (!hit || hit.distance > 160) return;
+      controls.target.copy(hit.point); controls.update();
+      window.__qaPivo = hit.point.toArray().map(v => +v.toFixed(2));
+    }
+    canvas.addEventListener('pointerdown', e => { if (e.isPrimary) pivoNoPonto(e.clientX, e.clientY); }, { capture: true });
+    // WASD (e Shift para correr) anda pelo chão na direção em que a câmera olha; setas também andam
+    const teclas = new Set();
+    const ehCampo = el => el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+    addEventListener('keydown', e => { if (ehCampo(document.activeElement) && document.activeElement.type !== 'range') return; const SETAS = { arrowup: 'w', arrowdown: 's', arrowleft: 'a', arrowright: 'd' }; let k = e.key.toLowerCase(); if (SETAS[k] && !(document.activeElement && document.activeElement.type === 'range')) { k = SETAS[k]; e.preventDefault(); } if ('wasdqe'.includes(k) && k.length === 1) { teclas.add(k); camFly = null; } if (e.key === 'Shift') teclas.add('shift'); });
+    addEventListener('keyup', e => { const SETAS = { arrowup: 'w', arrowdown: 's', arrowleft: 'a', arrowright: 'd' }; const k = e.key.toLowerCase(); teclas.delete(SETAS[k] || k); if (e.key === 'Shift') teclas.delete('shift'); });
+    addEventListener('blur', () => teclas.clear());
+    const _f = new THREE.Vector3(), _r = new THREE.Vector3(), _m = new THREE.Vector3();
+    function andaTeclado(dt) {
+      if (!teclas.size || tour) return;
+      camera.getWorldDirection(_f); _f.y = 0; if (_f.lengthSq() < 1e-6) return; _f.normalize();
+      _r.set(-_f.z, 0, _f.x);
+      _m.set(0, 0, 0);
+      if (teclas.has('w')) _m.add(_f); if (teclas.has('s')) _m.sub(_f);
+      if (teclas.has('d')) _m.add(_r); if (teclas.has('a')) _m.sub(_r);
+      if (teclas.has('e')) _m.y += 1; if (teclas.has('q')) _m.y -= 1;
+      if (_m.lengthSq() === 0) return;
+      const dist = camera.position.distanceTo(controls.target);
+      const vel = Math.max(4, Math.min(dist * 0.7, 40)) * (teclas.has('shift') ? 2.5 : 1);
+      _m.normalize().multiplyScalar(vel * dt);
+      camera.position.add(_m); controls.target.add(_m);
+    }
+    window.__qaTeclas = () => [...teclas];
     // dois toques rápidos no celular (eventos de ponteiro, funcionam junto com a câmera)
     let ultimoToque = 0, toqueX = 0, toqueY = 0, dedos = 0, baixoT = 0, baixoX = 0, baixoY = 0, multi = false;
     canvas.addEventListener('pointerdown', e => {
@@ -828,6 +862,7 @@
           controls.target.lerpVectors(camFly.t0, camFly.t1, e);
           if (camFly.k >= 1) camFly = null;
         }
+        andaTeclado(dt);
         controls.update();
         limitaAlvo();
       }
